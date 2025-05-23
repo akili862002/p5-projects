@@ -1,0 +1,33 @@
+{
+  "name": "pet-p5",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.7",
+    "p5": "^1.11.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router": "^6.28.0",
+    "react-router-dom": "^6.28.0",
+    "react-tooltip": "^5.28.0",
+    "tailwindcss": "^4.1.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.14",
+    "@types/p5": "^1.7.6",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "globals": "^15.14.0",
+    "typescript": "~5.6.2",
+    "typescript-eslint": "^8.18.2",
+    "vite": "^6.0.5"
+  }
+}
