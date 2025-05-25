@@ -7,6 +7,7 @@ import HomePage from "./pages/home/home.page";
 import CollisionPage from "./pages/collision/collision.page";
 import FlockingPage from "./pages/flocking/flocking.page";
 import CubeWavePage from "./pages/cube-wave/cube-wave.page";
+import RaycastingPage from "./pages/raycasting/raycasting.page";
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
@@ -15,6 +16,7 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/collision" element={<CollisionPage />} />
       <Route path="/flocking" element={<FlockingPage />} />
       <Route path="/cube-wave" element={<CubeWavePage />} />
+      <Route path="/raycasting" element={<RaycastingPage />} />
     </Routes>
   </BrowserRouter>
 );
