@@ -1,23 +1,36 @@
 import P5, { Vector } from "p5";
+import { Ship } from "./ship";
+import { Asteroid } from "./asteroid";
+import { Bullet } from "./bullet";
+import { hexToRgb } from "./utils";
 
-export const sketch = (p: P5) => {
-  let ship: Ship;
-  let isBoosting = false;
-  let shipImg: P5.Image;
+export let p: P5;
+export let ship: Ship;
+export let isBoosting = false;
+export let shipImg: P5.Image;
+export let bulletImg: P5.Image;
+export let backgroundColor: P5.Color;
+export let isDebug = false;
+
+let score = 0;
+let lives = 3;
+let gameOver = false;
+
+export const sketch = (p5: P5) => {
+  p = p5;
   let asteroids: Asteroid[] = [];
   let bullets: Bullet[] = [];
-  let score = 0;
-  let lives = 3;
-  let gameOver = false;
-  let isDebug = false;
+
   // let isDebug = true;
 
   p.preload = () => {
     shipImg = p.loadImage("/game/ship.png");
+    bulletImg = p.loadImage("/game/bullet.png");
   };
 
   p.setup = () => {
     p.createCanvas(innerWidth, innerHeight);
+    backgroundColor = p.color(hexToRgb("#1F102A"));
     // p.createCheckbox("Debug").mousePressed(() => (isDebug = !isDebug));
     resetGame();
   };
@@ -47,129 +60,190 @@ export const sketch = (p: P5) => {
       return createAsteroid();
     }
 
-    asteroids.push(new Asteroid(newX, newY, newSize));
+    const newAsteroid = new Asteroid(newX, newY, newSize);
+    asteroids.push(newAsteroid);
+
+    return newAsteroid;
   };
 
   p.draw = () => {
-    p.background(20);
+    p.background(backgroundColor);
 
     if (gameOver) {
       displayGameOver();
       return;
     }
 
-    // Update and draw ship
+    updateAndDrawShip();
+    updateAndDrawBullets();
+    updateAndDrawAsteroids();
+    handleShipControls();
+    displayHUD();
+
+    // Create new asteroids periodically
+    if (p.frameCount % 300 === 0 && asteroids.length < 12) {
+      createAsteroid();
+    }
+  };
+
+  const updateAndDrawShip = () => {
     ship.update();
     ship.draw();
     ship.edges();
     if (isBoosting) ship.boost();
+  };
 
-    // Update and draw asteroids
-    for (let i = asteroids.length - 1; i >= 0; i--) {
-      const asteroid = asteroids[i];
-      asteroid.update();
-      asteroid.draw();
-      asteroid.edges();
-
-      // Check for asteroid collisions with other asteroids
-      for (let j = i - 1; j >= 0; j--) {
-        const other = asteroids[j];
-        if (asteroid.intersectsAsteroid(other)) {
-          // Collision response - bounce asteroids off each other
-          const dx = other.pos.x - asteroid.pos.x;
-          const dy = other.pos.y - asteroid.pos.y;
-          const angle = Math.atan2(dy, dx);
-
-          // Calculate velocity components
-          const v1 = p.createVector(asteroid.vel.x, asteroid.vel.y);
-          const v2 = p.createVector(other.vel.x, other.vel.y);
-
-          // Apply bounce effect
-          asteroid.vel = v2.copy();
-          other.vel = v1.copy();
-
-          // Push asteroids apart slightly to prevent sticking
-          const overlap = asteroid.r + other.r - asteroid.pos.dist(other.pos);
-          if (overlap > 0) {
-            const pushX = overlap * Math.cos(angle) * 0.5;
-            const pushY = overlap * Math.sin(angle) * 0.5;
-            asteroid.pos.x -= pushX;
-            asteroid.pos.y -= pushY;
-            other.pos.x += pushX;
-            other.pos.y += pushY;
-          }
-        }
-      }
-
-      // Check for ship collision with asteroids
-      if (ship.intersects(asteroid)) {
-        lives--;
-        if (lives <= 0) {
-          gameOver = true;
-        } else {
-          ship = new Ship(p.width / 2, p.height / 2);
-        }
-        asteroids.splice(i, 1);
-        if (asteroids.length < 5) {
-          createAsteroid();
-        }
-      }
-    }
-
-    // Update and draw bullets
+  const updateAndDrawBullets = () => {
     for (let i = bullets.length - 1; i >= 0; i--) {
       const bullet = bullets[i];
       bullet.update();
       bullet.draw();
+      bullet.edges();
 
       if (bullet.shouldRemove()) {
         bullets.splice(i, 1);
         continue;
       }
 
-      // Check for bullet collision with asteroids
-      for (let j = asteroids.length - 1; j >= 0; j--) {
-        const asteroid = asteroids[j];
-        if (bullet.intersects(asteroid)) {
-          // Remove the bullet
-          bullets.splice(i, 1);
+      checkBulletAsteroidCollisions(bullet, i);
+    }
+  };
 
-          // Break asteroid into smaller pieces
-          if (asteroid.r > 20) {
-            const newSize = asteroid.r / 2;
-            for (let k = 0; k < 2; k++) {
-              createAsteroid(asteroid.pos.x, asteroid.pos.y, newSize);
-            }
+  const checkBulletAsteroidCollisions = (
+    bullet: Bullet,
+    bulletIndex: number
+  ) => {
+    for (let j = asteroids.length - 1; j >= 0; j--) {
+      const asteroid = asteroids[j];
+      if (bullet.intersects(asteroid)) {
+        // Remove the bullet
+        bullets.splice(bulletIndex, 1);
+
+        // Break asteroid into smaller pieces
+        if (asteroid.r > 20) {
+          const newSize = asteroid.r / 2;
+          for (let k = 0; k < 2; k++) {
+            const newAsteroid = createAsteroid(
+              asteroid.pos.x,
+              asteroid.pos.y,
+              newSize
+            );
+            newAsteroid.vel.setMag(asteroid.vel.mag() * 1.4);
           }
-
-          // Remove the asteroid and update score
-          asteroids.splice(j, 1);
-          score += Math.floor(100 / asteroid.r);
-
-          // Create new asteroid if too few remain
-          if (asteroids.length < 5) {
-            createAsteroid();
-          }
-
-          break;
         }
+
+        // Remove the asteroid and update score
+        asteroids.splice(j, 1);
+        score += Math.floor(100 / asteroid.r);
+
+        // Create new asteroid if too few remain
+        if (asteroids.length < 5) {
+          createAsteroid();
+        }
+
+        break;
       }
     }
+  };
 
-    // Handle ship controls
+  const updateAndDrawAsteroids = () => {
+    for (let i = asteroids.length - 1; i >= 0; i--) {
+      const asteroid = asteroids[i];
+      asteroid.update();
+      asteroid.draw();
+      asteroid.edges();
+
+      checkAsteroidCollisions(asteroid, i);
+      checkShipAsteroidCollision(asteroid, i);
+    }
+  };
+
+  const checkAsteroidCollisions = (
+    asteroid: Asteroid,
+    asteroidIndex: number
+  ) => {
+    for (let j = asteroidIndex - 1; j >= 0; j--) {
+      const other = asteroids[j];
+      if (asteroid.intersectsAsteroid(other)) {
+        handleAsteroidCollision(asteroid, other);
+      }
+    }
+  };
+
+  const handleAsteroidCollision = (
+    asteroid1: Asteroid,
+    asteroid2: Asteroid
+  ) => {
+    // Collision response - elastic collision based on radius (mass)
+    const dx = asteroid2.pos.x - asteroid1.pos.x;
+    const dy = asteroid2.pos.y - asteroid1.pos.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Calculate mass based on radius (area proportional to mass)
+    const m1 = asteroid1.r * asteroid1.r;
+    const m2 = asteroid2.r * asteroid2.r;
+
+    // Calculate normal vectors for collision
+    const normalX = dx / distance;
+    const normalY = dy / distance;
+
+    // Calculate relative velocity along normal
+    const relVelX = asteroid2.vel.x - asteroid1.vel.x;
+    const relVelY = asteroid2.vel.y - asteroid1.vel.y;
+    const relVelDotNormal = relVelX * normalX + relVelY * normalY;
+
+    // If asteroids are moving away from each other, skip collision response
+    if (relVelDotNormal > 0) return;
+
+    // Calculate impulse scalar
+    const impulseScalar = (2 * relVelDotNormal) / (1 / m1 + 1 / m2);
+
+    // Apply impulse to velocities
+    const impulseX = normalX * impulseScalar;
+    const impulseY = normalY * impulseScalar;
+
+    asteroid1.vel.x += impulseX / m1;
+    asteroid1.vel.y += impulseY / m1;
+    asteroid2.vel.x -= impulseX / m2;
+    asteroid2.vel.y -= impulseY / m2;
+
+    // Push asteroids apart slightly to prevent sticking
+    const overlap = asteroid1.r + asteroid2.r - distance;
+    if (overlap > 0) {
+      const pushRatio1 = m2 / (m1 + m2);
+      const pushRatio2 = m1 / (m1 + m2);
+
+      asteroid1.pos.x -= normalX * overlap * pushRatio1;
+      asteroid1.pos.y -= normalY * overlap * pushRatio1;
+      asteroid2.pos.x += normalX * overlap * pushRatio2;
+      asteroid2.pos.y += normalY * overlap * pushRatio2;
+    }
+  };
+
+  const checkShipAsteroidCollision = (
+    asteroid: Asteroid,
+    asteroidIndex: number
+  ) => {
+    if (ship.intersects(asteroid)) {
+      lives--;
+      if (lives <= 0) {
+        gameOver = true;
+      } else {
+        ship = new Ship(p.width / 2, p.height / 2);
+      }
+      asteroids.splice(asteroidIndex, 1);
+      if (asteroids.length < 5) {
+        createAsteroid();
+      }
+    }
+  };
+
+  const handleShipControls = () => {
     if (p.keyIsDown(p.LEFT_ARROW)) {
-      ship.rotation -= 0.08;
+      ship.rotation -= 0.05;
     }
     if (p.keyIsDown(p.RIGHT_ARROW)) {
-      ship.rotation += 0.08;
-    }
-
-    // Display score and lives
-    displayHUD();
-
-    // Create new asteroids periodically
-    if (p.frameCount % 300 === 0 && asteroids.length < 12) {
-      createAsteroid();
+      ship.rotation += 0.05;
     }
   };
 
@@ -217,251 +291,4 @@ export const sketch = (p: P5) => {
       isBoosting = false;
     }
   };
-
-  class Ship {
-    pos: P5.Vector;
-    vel: P5.Vector;
-    acc: P5.Vector;
-    r = 20;
-    heading = p.PI / 2;
-    rotation = 0;
-    maxSpeed = 6;
-    friction = 0.98;
-    invincible = false;
-    invincibleTimer = 0;
-    maxRotation = 0.1;
-
-    constructor(x: number, y: number) {
-      this.pos = p.createVector(x, y);
-      this.vel = p.createVector(0, 0);
-      this.acc = p.createVector(0, 0);
-      this.invincible = true;
-      this.invincibleTimer = 120; // Invincible for 2 seconds (60 frames per second)
-    }
-
-    update() {
-      // Update heading based on rotation
-      this.heading += this.rotation;
-      this.rotation *= 0.9; // Dampen rotation
-      if (Math.abs(this.rotation) > this.maxRotation) {
-        this.rotation = this.maxRotation * Math.sign(this.rotation);
-      }
-
-      // Update position with physics
-      this.vel.add(this.acc);
-      this.vel.mult(this.friction);
-      this.vel.limit(this.maxSpeed);
-      this.pos.add(this.vel);
-      this.acc.mult(0);
-
-      // Handle invincibility timer
-      if (this.invincible) {
-        this.invincibleTimer--;
-        if (this.invincibleTimer <= 0) {
-          this.invincible = false;
-        }
-      }
-    }
-
-    applyForce(force: P5.Vector) {
-      this.acc.add(force);
-    }
-
-    draw() {
-      p.push();
-      p.translate(this.pos.x, this.pos.y);
-      p.rotate(this.heading + p.PI / 2); // Add PI/2 to make the ship point up
-
-      // Flash if invincible
-      if (this.invincible && p.frameCount % 10 < 5) {
-        p.tint(255, 150); // Semi-transparent
-      }
-
-      p.imageMode(p.CENTER);
-      p.image(shipImg, 0, 0, this.r * 2, this.r * 2);
-
-      // Draw thruster when boosting
-      if (isBoosting) {
-        p.fill(255, 150, 0);
-        p.triangle(
-          -this.r * 0.5,
-          this.r,
-          0,
-          this.r * 2.5,
-          this.r * 0.5,
-          this.r
-        );
-      }
-
-      p.pop();
-
-      if (isDebug) {
-        p.push();
-        p.noFill();
-        p.stroke(0, 255, 0);
-        p.circle(this.pos.x, this.pos.y, this.r * 2);
-        p.pop();
-      }
-    }
-
-    boost() {
-      const force = Vector.fromAngle(this.heading).mult(0.15);
-      this.applyForce(force);
-    }
-
-    edges() {
-      // Wrap around edges of canvas with momentum preservation
-      if (this.pos.x < -this.r) {
-        this.pos.x = p.width + this.r;
-      } else if (this.pos.x > p.width + this.r) {
-        this.pos.x = -this.r;
-      }
-
-      if (this.pos.y < -this.r) {
-        this.pos.y = p.height + this.r;
-      } else if (this.pos.y > p.height + this.r) {
-        this.pos.y = -this.r;
-      }
-    }
-
-    intersects(asteroid: Asteroid) {
-      if (this.invincible) return false;
-
-      const d = this.pos.dist(asteroid.pos);
-      return d < this.r + asteroid.r;
-    }
-  }
-
-  class Asteroid {
-    pos: P5.Vector;
-    vel: P5.Vector;
-    r: number;
-    angle = p.random(0, 2 * p.PI);
-    vertices: P5.Vector[] = [];
-    vertexCount: number;
-    rotationSpeed = p.random(-0.03, 0.03);
-
-    constructor(x: number, y: number, r: number) {
-      this.r = r;
-      this.pos = p.createVector(x, y);
-
-      // Random velocity based on size (smaller = faster)
-      const speed = p.map(r, 20, 80, 2.5, 1.2);
-      this.vel = Vector.random2D().mult(speed);
-
-      // Create jagged shape with vertices
-      this.vertexCount = p.floor(p.map(r, 20, 80, 20, 25));
-      this.vertices = [];
-
-      for (let i = 0; i < this.vertexCount; i++) {
-        const angle = p.map(i, 0, this.vertexCount, 0, p.TWO_PI);
-        const offset = p.random(1, 1.3); // Randomize vertex distance from center
-        const x = this.r * offset * p.cos(angle);
-        const y = this.r * offset * p.sin(angle);
-        this.vertices.push(p.createVector(x, y));
-      }
-    }
-
-    update() {
-      this.pos.add(this.vel);
-      this.angle += this.rotationSpeed;
-    }
-
-    draw() {
-      p.push();
-      p.translate(this.pos.x, this.pos.y);
-      p.rotate(this.angle);
-      p.noStroke();
-
-      // Draw asteroid with gradient shading
-      const c1 = p.color(180, 180, 180);
-      const c2 = p.color(100, 100, 100);
-
-      p.beginShape();
-      for (let i = 0; i < this.vertices.length; i++) {
-        const v = this.vertices[i];
-        const normalizedDist = v.mag() / this.r;
-        const c = p.lerpColor(c1, c2, normalizedDist);
-        p.fill(c);
-        p.vertex(v.x, v.y);
-      }
-      p.endShape(p.CLOSE);
-
-      p.pop();
-
-      if (isDebug) {
-        p.push();
-        p.noFill();
-        p.stroke(0, 255, 0);
-        p.circle(this.pos.x, this.pos.y, this.r * 2);
-        p.pop();
-      }
-    }
-
-    edges() {
-      // Wrap around edges of canvas
-      if (this.pos.x < -this.r) {
-        this.pos.x = p.width + this.r;
-      } else if (this.pos.x > p.width + this.r) {
-        this.pos.x = -this.r;
-      }
-
-      if (this.pos.y < -this.r) {
-        this.pos.y = p.height + this.r;
-      } else if (this.pos.y > p.height + this.r) {
-        this.pos.y = -this.r;
-      }
-    }
-
-    intersectsAsteroid(other: Asteroid) {
-      const d = this.pos.dist(other.pos);
-      return d < this.r + other.r;
-    }
-  }
-
-  class Bullet {
-    pos: P5.Vector;
-    vel: P5.Vector;
-    r = 4;
-    lifespan = 70; // Frames until bullet disappears
-
-    constructor(x: number, y: number, heading: number) {
-      this.pos = p.createVector(x, y);
-      const speed = 10;
-      this.vel = Vector.fromAngle(heading).mult(speed);
-    }
-
-    update() {
-      this.pos.add(this.vel);
-      this.lifespan--;
-    }
-
-    draw() {
-      p.push();
-      p.noStroke();
-      p.fill(255, 255, 200);
-      p.ellipse(this.pos.x, this.pos.y, this.r);
-
-      // Add glow effect
-      p.fill(255, 255, 100, 150);
-      p.ellipse(this.pos.x, this.pos.y, this.r);
-      p.pop();
-    }
-
-    intersects(asteroid: Asteroid) {
-      const d = p.dist(this.pos.x, this.pos.y, asteroid.pos.x, asteroid.pos.y);
-      return d < this.r + asteroid.r;
-    }
-
-    shouldRemove() {
-      // Remove when bullet leaves screen or expires
-      return (
-        this.lifespan <= 0 ||
-        this.pos.x < 0 ||
-        this.pos.x > p.width ||
-        this.pos.y < 0 ||
-        this.pos.y > p.height
-      );
-    }
-  }
 };
