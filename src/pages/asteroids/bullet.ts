@@ -1,5 +1,5 @@
 import { Asteroid } from "./asteroid";
-import { bulletImg, p } from "./asteroids.sketch";
+import { p } from "./sketch";
 import P5, { Vector } from "p5";
 
 export class Bullet {

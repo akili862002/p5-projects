@@ -1,4 +1,4 @@
-import { p, isDebug } from "./asteroids.sketch";
+import { p, isDebug } from "./sketch";
 import P5, { Vector } from "p5";
 
 export class Asteroid {

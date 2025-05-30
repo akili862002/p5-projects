@@ -30,7 +30,7 @@ export const sketch = (p5: P5) => {
 
   p.setup = () => {
     p.createCanvas(innerWidth, innerHeight);
-    backgroundColor = p.color(hexToRgb("#1F102A"));
+    backgroundColor = p.color(30);
     // p.createCheckbox("Debug").mousePressed(() => (isDebug = !isDebug));
     resetGame();
   };
@@ -254,6 +254,36 @@ export const sketch = (p5: P5) => {
     p.text(`Score: ${score}`, 20, 30);
     p.textAlign(p.RIGHT);
     p.text(`Lives: ${lives}`, p.width - 20, 30);
+
+    displaySpeed();
+  };
+
+  const displaySpeed = () => {
+    // Speed progress bar
+    const barWidth = 150;
+    const barHeight = 10;
+    const barX = p.width - barWidth - 10;
+    const barY = p.height - barHeight - 10;
+
+    // Draw the empty bar background
+    p.fill(50);
+    p.noStroke();
+    p.rect(barX, barY, barWidth, barHeight);
+
+    // Calculate the fill width based on current speed relative to max speed
+    const speedRatio = p.constrain(ship.vel.mag() / ship.maxSpeed, 0, 1);
+    const fillWidth = barWidth * speedRatio;
+
+    // Draw the filled portion with color gradient from green to red
+    if (fillWidth > 0) {
+      p.fill(255);
+      p.rect(barX, barY, fillWidth, barHeight);
+    }
+
+    p.fill(255);
+    p.textSize(14);
+    p.textAlign(p.CENTER);
+    p.text(`${ship.vel.mag().toFixed(2)}`, p.width - 25, barY - 10);
   };
 
   const displayGameOver = () => {
@@ -280,6 +310,10 @@ export const sketch = (p5: P5) => {
           .add(ship.pos);
         bullets.push(new Bullet(bulletPos.x, bulletPos.y, ship.heading));
       }
+
+      // make the ship block back
+      const knockbackForce = Vector.fromAngle(ship.heading).mult(-0.5);
+      ship.vel.add(knockbackForce);
     }
     if (e.key === "Enter" && gameOver) {
       resetGame();

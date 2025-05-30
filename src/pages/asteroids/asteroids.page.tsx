@@ -1,6 +1,6 @@
 import P5JS from "p5";
 import { useEffect, useRef } from "react";
-import { sketch } from "./asteroids.sketch";
+import { sketch } from "./sketch";
 import { useTitle } from "react-use";
 
 export default function AsteroidsPage() {

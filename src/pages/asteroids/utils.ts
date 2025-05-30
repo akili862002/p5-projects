@@ -1,4 +1,4 @@
-import { p } from "./asteroids.sketch";
+import { p } from "./sketch";
 
 export function hexToRgb(hex: string) {
   hex = hex.replace("#", "");

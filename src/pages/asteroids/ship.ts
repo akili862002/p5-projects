@@ -1,5 +1,5 @@
 import P5, { Vector } from "p5";
-import { isBoosting, isDebug, p, shipImg } from "./asteroids.sketch";
+import { isBoosting, isDebug, p, shipImg } from "./sketch";
 import { Asteroid } from "./asteroid";
 
 export class Ship {
