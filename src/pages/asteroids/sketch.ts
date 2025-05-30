@@ -2,7 +2,6 @@ import P5, { Vector } from "p5";
 import { Ship } from "./ship";
 import { Asteroid } from "./asteroid";
 import { Bullet } from "./bullet";
-import { hexToRgb } from "./utils";
 
 export let p: P5;
 export let ship: Ship;
@@ -239,10 +238,10 @@ export const sketch = (p5: P5) => {
   };
 
   const handleShipControls = () => {
-    if (p.keyIsDown(p.LEFT_ARROW)) {
+    if (p.keyIsDown(p.LEFT_ARROW) || p.keyIsDown(65)) {
       ship.rotation -= 0.05;
     }
-    if (p.keyIsDown(p.RIGHT_ARROW)) {
+    if (p.keyIsDown(p.RIGHT_ARROW) || p.keyIsDown(68)) {
       ship.rotation += 0.05;
     }
   };
@@ -298,30 +297,35 @@ export const sketch = (p5: P5) => {
   };
 
   p.keyPressed = (e: any) => {
-    if (e.key === "ArrowUp") {
+    if (e.key === "ArrowUp" || e.key.toLowerCase() === "w") {
       isBoosting = true;
     }
     if (e.key === " ") {
-      // Limit bullet count to prevent spamming
-      if (bullets.length < 10) {
-        // Create bullet at ship's nose
-        const bulletPos = Vector.fromAngle(ship.heading)
-          .mult(ship.r)
-          .add(ship.pos);
-        bullets.push(new Bullet(bulletPos.x, bulletPos.y, ship.heading));
-      }
-
-      // make the ship block back
-      const knockbackForce = Vector.fromAngle(ship.heading).mult(-0.5);
-      ship.vel.add(knockbackForce);
+      fire();
     }
     if (e.key === "Enter" && gameOver) {
       resetGame();
     }
   };
 
+  const fire = () => {
+    if (bullets.length >= 10) {
+      return;
+    }
+
+    const bulletPos = Vector.fromAngle(ship.heading).mult(ship.r).add(ship.pos);
+    const newBullet = new Bullet(bulletPos.x, bulletPos.y, ship.heading);
+    newBullet.vel.add(ship.vel);
+
+    bullets.push(newBullet);
+
+    // make the ship block back
+    const knockbackForce = Vector.fromAngle(ship.heading).mult(-0.5);
+    ship.vel.add(knockbackForce);
+  };
+
   p.keyReleased = (e: any) => {
-    if (e.key === "ArrowUp") {
+    if (e.key === "ArrowUp" || e.key.toLowerCase() === "w") {
       isBoosting = false;
     }
   };

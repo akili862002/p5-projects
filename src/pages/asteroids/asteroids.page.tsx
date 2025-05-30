@@ -2,6 +2,7 @@ import P5JS from "p5";
 import { useEffect, useRef } from "react";
 import { sketch } from "./sketch";
 import { useTitle } from "react-use";
+import { Guide } from "./guide";
 
 export default function AsteroidsPage() {
   useTitle("Asteroids");
@@ -19,7 +20,8 @@ export default function AsteroidsPage() {
   }, []);
 
   return (
-    <div className={""}>
+    <div className={"relative"}>
+      <Guide />
       <div id="canvas-container" ref={canvasRef} />
     </div>
   );
