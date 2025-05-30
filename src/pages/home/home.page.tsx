@@ -44,4 +44,14 @@ const pages = [
     path: "/raycasting",
     preview: "/preview/raycasting.png",
   },
+  {
+    name: "Terrain 3D",
+    path: "/terrain-3d",
+    preview: "/preview/terrain-3d.png",
+  },
+  {
+    name: "Asteroids",
+    path: "/asteroids",
+    preview: "/preview/asteroids.png",
+  },
 ];
