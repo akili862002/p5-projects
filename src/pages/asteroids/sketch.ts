@@ -8,8 +8,11 @@ export let ship: Ship;
 export let isBoosting = false;
 export let shipImg: P5.Image;
 export let bulletImg: P5.Image;
+export let firerImg: P5.Image;
 export let backgroundColor: P5.Color;
 export let isDebug = false;
+
+// export let isDebug = true;
 
 let score = 0;
 let lives = 3;
@@ -24,7 +27,10 @@ export const sketch = (p5: P5) => {
 
   p.preload = () => {
     shipImg = p.loadImage("/game/ship.png");
-    bulletImg = p.loadImage("/game/bullet.png");
+    firerImg = p.loadImage("/game/firer.png");
+    // shipImg = p.loadImage("/game/black-ship.png");
+    // shipImg = p.loadImage("/game/red-ship.png");
+    // bulletImg = p.loadImage("/game/bullet.png");
   };
 
   p.setup = () => {
@@ -121,13 +127,28 @@ export const sketch = (p5: P5) => {
         // Break asteroid into smaller pieces
         if (asteroid.r > 20) {
           const newSize = asteroid.r / 2;
+
+          const currentVel = asteroid.vel.copy();
+          const bulletVel = bullet.vel.copy();
+          const newCombinedVel = currentVel.add(
+            bulletVel.setMag(currentVel.mag())
+          );
+          newCombinedVel.setMag(newCombinedVel.mag() * 1.5);
+
           for (let k = 0; k < 2; k++) {
             const newAsteroid = createAsteroid(
               asteroid.pos.x,
               asteroid.pos.y,
               newSize
             );
-            newAsteroid.vel.setMag(asteroid.vel.mag() * 1.4);
+
+            // Create different angles for the two asteroid pieces
+            const angleOffset = k === 0 ? p.PI / 4 : -p.PI / 4;
+            const vel = newCombinedVel
+              .copy()
+              .add(Vector.fromAngle(ship.heading + angleOffset).mult(1.3));
+
+            newAsteroid.vel = vel;
           }
         }
 

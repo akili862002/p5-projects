@@ -9,6 +9,7 @@ export class Asteroid {
   vertices: P5.Vector[] = [];
   vertexCount: number;
   rotationSpeed = p.random(-0.03, 0.03);
+  maxSpeed = 9;
 
   constructor(x: number, y: number, r: number) {
     this.r = r;
@@ -34,6 +35,7 @@ export class Asteroid {
   update() {
     this.pos.add(this.vel);
     this.angle += this.rotationSpeed;
+    this.vel.limit(this.maxSpeed);
   }
 
   draw() {

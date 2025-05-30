@@ -1,5 +1,5 @@
 import P5, { Vector } from "p5";
-import { isBoosting, isDebug, p, shipImg } from "./sketch";
+import { firerImg, isBoosting, isDebug, p, shipImg } from "./sketch";
 import { Asteroid } from "./asteroid";
 
 export class Ship {
@@ -19,7 +19,7 @@ export class Ship {
     this.pos = p.createVector(x, y);
     this.vel = p.createVector(0, 0);
     this.acc = p.createVector(0, 0);
-    this.heading = p.PI / 2;
+    this.heading = -p.PI / 2;
     this.invincible = true;
     this.invincibleTimer = 120; // Invincible for 2 seconds (60 frames per second)
   }
@@ -67,8 +67,11 @@ export class Ship {
 
     // Draw thruster when boosting
     if (isBoosting) {
-      p.fill(255, 150, 0);
-      p.triangle(-this.r * 0.5, this.r, 0, this.r * 2.5, this.r * 0.5, this.r);
+      p.push();
+      p.translate(0, this.r * 1.8);
+      const scale = 1.3;
+      p.image(firerImg, 0, 0, this.r * scale, this.r * scale);
+      p.pop();
     }
 
     p.pop();
@@ -78,6 +81,19 @@ export class Ship {
       p.noFill();
       p.stroke(0, 255, 0);
       p.circle(this.pos.x, this.pos.y, this.r * 2);
+      p.pop();
+
+      // draw velocity vector
+      p.push();
+      p.noFill();
+      p.stroke(255);
+      const scale = 10;
+      p.line(
+        this.pos.x,
+        this.pos.y,
+        this.pos.x + this.vel.x * scale,
+        this.pos.y + this.vel.y * scale
+      );
       p.pop();
     }
   }
