@@ -202,7 +202,7 @@ export const sketch = (p: P5) => {
       if (bullets.length < 10) {
         // Create bullet at ship's nose
         const bulletPos = Vector.fromAngle(ship.heading)
-          .mult(ship.r * 2)
+          .mult(ship.r)
           .add(ship.pos);
         bullets.push(new Bullet(bulletPos.x, bulletPos.y, ship.heading));
       }
