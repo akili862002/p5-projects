@@ -2,22 +2,12 @@ import { heartImage, lives, p, score, ship } from "../sketch";
 import P5 from "p5";
 
 // Add animation variables for score display
-let scoreSize = 20;
-let targetScoreSize = 20;
-let lastScore = 0;
+let scoreSize = 24;
 let scoreColor: P5.Color;
 let normalScoreColor: P5.Color;
 let highlightScoreColor: P5.Color;
-
-// Add point indicators
-interface PointIndicator {
-  value: number;
-  x: number;
-  y: number;
-  opacity: number;
-  size: number;
-}
-let pointIndicators: PointIndicator[] = [];
+let lastScore = 0;
+let targetScoreSize = 20;
 
 export const displayHUD = () => {
   // Initialize colors if needed
@@ -31,72 +21,33 @@ export const displayHUD = () => {
   displayScore();
   displayLives();
   displaySpeed();
-  updatePointIndicators();
 };
 
-// Add function to update score animation
 const updateScoreAnimation = () => {
-  // Check if score has changed
   if (score > lastScore) {
-    // Calculate points gained
-    const pointsGained = score - lastScore;
-
-    // Set target size larger when points are gained
-    targetScoreSize = 40;
-    // Set highlight color
+    targetScoreSize = 60;
     scoreColor = highlightScoreColor;
-
-    // Create point indicator
-    pointIndicators.push({
-      value: pointsGained,
-      x: 100, // Position next to score
-      y: 30,
-      opacity: 255,
-      size: 20,
-    });
-
     lastScore = score;
   }
 
-  // Smoothly animate size back to normal
   scoreSize = p.lerp(scoreSize, targetScoreSize, 0.2);
 
-  // Reset target size when animation is nearly complete
   if (Math.abs(scoreSize - targetScoreSize) < 0.5 && targetScoreSize > 20) {
     targetScoreSize = 20;
-    // Fade back to normal color
     scoreColor = normalScoreColor;
   }
 };
 
-const updatePointIndicators = () => {
-  // Update and draw each point indicator
-  for (let i = pointIndicators.length - 1; i >= 0; i--) {
-    const indicator = pointIndicators[i];
-
-    // Move upward
-    indicator.y -= 1;
-    // Fade out
-    indicator.opacity -= 5;
-
-    // Draw if still visible
-    if (indicator.opacity > 0) {
-      p.fill(255, 255, 0, indicator.opacity);
-      p.textSize(indicator.size);
-      p.textAlign(p.LEFT);
-      p.text(`+${indicator.value}`, indicator.x, indicator.y);
-    } else {
-      // Remove if fully faded
-      pointIndicators.splice(i, 1);
-    }
-  }
-};
-
 const displayScore = () => {
+  p.fill(255);
+  p.textSize(20);
+  p.textAlign(p.LEFT);
+  p.text(`Score`, 20, p.height - 20);
+
   p.fill(scoreColor);
   p.textSize(scoreSize);
   p.textAlign(p.LEFT);
-  p.text(`Score: ${score}`, 20, 30);
+  p.text(`${score}`, 80, p.height - 20);
 };
 
 const displayLives = () => {

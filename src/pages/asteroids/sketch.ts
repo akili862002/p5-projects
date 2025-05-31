@@ -4,6 +4,8 @@ import { Asteroid } from "./entities/asteroid";
 import { Bullet } from "./entities/bullet";
 import { displayGameOver, displayHUD } from "./entities/hud";
 import { BACKGROUND_COLOR, DEBUG, LIVES } from "./config";
+import { SoundManager } from "./sound-manager";
+import { PointIndicator } from "./point-indicator";
 
 export let p: P5;
 export let ship: Ship;
@@ -24,6 +26,11 @@ export let score = 0;
 export let lives = LIVES;
 export let gameOver = false;
 
+let pointIndicators: PointIndicator;
+
+// Get sound manager instance
+const soundManager = SoundManager.getInstance();
+
 export const sketch = (p5: P5) => {
   p = p5;
   let asteroids: Asteroid[] = [];
@@ -38,12 +45,13 @@ export const sketch = (p5: P5) => {
     // shipImg = p.loadImage("/game/black-ship.png");
     // shipImg = p.loadImage("/game/red-ship.png");
     // bulletImg = p.loadImage("/game/bullet.png");
+    // shootSound = p.loadSound("/game/shoot.mp3");
   };
 
   p.setup = () => {
     p.createCanvas(innerWidth, innerHeight);
     backgroundColor = p.color(BACKGROUND_COLOR);
-    // p.createCheckbox("Debug").mousePressed(() => (isDebug = !isDebug));
+    pointIndicators = new PointIndicator();
     resetGame();
   };
 
@@ -92,6 +100,9 @@ export const sketch = (p5: P5) => {
     handleShipControls();
     displayHUD();
 
+    pointIndicators.update();
+    pointIndicators.draw();
+
     // Create new asteroids periodically
     if (p.frameCount % 300 === 0 && asteroids.length < 12) {
       createAsteroid();
@@ -131,6 +142,9 @@ export const sketch = (p5: P5) => {
         // Remove the bullet
         bullets.splice(bulletIndex, 1);
 
+        // Play explosion sound
+        soundManager.playAsteroidExplosionSound();
+
         // Break asteroid into smaller pieces
         if (asteroid.r > 20) {
           const newSize = asteroid.r / 2;
@@ -161,7 +175,10 @@ export const sketch = (p5: P5) => {
 
         // Remove the asteroid and update score
         asteroids.splice(j, 1);
-        score += Math.floor(100 / asteroid.r);
+        const points = Math.floor(100 / asteroid.r);
+        score += points;
+
+        pointIndicators.add(points, bullet.pos.x, bullet.pos.y);
 
         // Create new asteroid if too few remain
         if (asteroids.length < 5) {
@@ -279,7 +296,10 @@ export const sketch = (p5: P5) => {
       isBoosting = true;
     }
     if (e.key === " ") {
-      fire();
+      const bullet = fire();
+      if (bullet) {
+        soundManager.playFireSound();
+      }
     }
     if (e.key === "Enter" && gameOver) {
       resetGame();
@@ -300,6 +320,8 @@ export const sketch = (p5: P5) => {
     // make the ship block back
     const knockbackForce = Vector.fromAngle(ship.heading).mult(-0.5);
     ship.vel.add(knockbackForce);
+
+    return newBullet;
   };
 
   p.keyReleased = (e: any) => {

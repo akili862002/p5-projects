@@ -1,6 +1,6 @@
 import { p, isDebug } from "../sketch";
 import P5, { Vector } from "p5";
-import { ASTEROID_COLOR } from "../config";
+import { ASTEROID_COLOR, ASTEROID_MAX_SPEED } from "../config";
 import { hexToRgb } from "../utils";
 
 export class Asteroid {
@@ -11,7 +11,7 @@ export class Asteroid {
   vertices: P5.Vector[] = [];
   vertexCount: number;
   rotationSpeed = p.random(-0.03, 0.03);
-  maxSpeed = 9;
+  maxSpeed = ASTEROID_MAX_SPEED;
   asteroidColor = hexToRgb(ASTEROID_COLOR);
 
   constructor(x: number, y: number, r: number) {
