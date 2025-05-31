@@ -1,4 +1,6 @@
+import { POINT_INDICATOR_COLOR } from "./config";
 import { p } from "./sketch";
+import { hexToRgbValues } from "./utils";
 
 interface PointIndicatorItem {
   value: number;
@@ -10,6 +12,7 @@ interface PointIndicatorItem {
 
 export class PointIndicator {
   items: PointIndicatorItem[] = [];
+  color = hexToRgbValues(POINT_INDICATOR_COLOR);
 
   add(value: number, x: number, y: number) {
     this.items.push({
@@ -36,7 +39,7 @@ export class PointIndicator {
   draw() {
     for (let i = this.items.length - 1; i >= 0; i--) {
       const item = this.items[i];
-      p.fill(255, 255, 0, item.opacity);
+      p.fill(this.color.r, this.color.g, this.color.b, item.opacity);
       p.textSize(item.size);
       p.textAlign(p.LEFT);
       p.text(`+${item.value}`, item.x, item.y);

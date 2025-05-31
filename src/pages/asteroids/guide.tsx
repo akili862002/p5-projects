@@ -1,66 +1,63 @@
+import { useState } from "react";
 import { useLocalStorage } from "react-use";
 
 export const Guide = () => {
-  const [shouldShow, setShouldShow] = useLocalStorage<boolean>(
-    "show-asteroids-guide",
-    true
-  );
-  //   const [shouldShow, setShouldShow] = useState<boolean>(true);
+  // const [shouldShow, setShouldShow] = useLocalStorage<boolean>(
+  //   "show-asteroids-guide",
+  //   true
+  // );
+  const [shouldShow, setShouldShow] = useState<boolean>(true);
 
   if (!shouldShow) {
     return null;
   }
 
   return (
-    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/90 p-8 rounded-2xl text-white max-w-md w-full max-h-[80vh] overflow-y-auto">
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/90 p-4 md:p-8 rounded-2xl text-neutral-300 max-w-md w-full max-h-[80vh] overflow-y-auto">
       <div className="space-y-6">
         <h1 className="text-2xl font-bold text-center mb-6">Asteroids</h1>
 
         <section>
           <h2 className="text-xl font-semibold text-yellow-300 mb-2">
-            Luật chơi
+            Game Rules
           </h2>
           <ul className="list-disc pl-5 space-y-1">
-            <li>Phá hủy các tiểu hành tinh để kiếm điểm</li>
-            <li>
-              Tiểu hành tinh lớn sẽ tách thành tiểu hành tinh vừa khi bị bắn
-              trúng
-            </li>
-            <li>
-              Tiểu hành tinh vừa sẽ tách thành tiểu hành tinh nhỏ khi bị bắn
-              trúng
-            </li>
-            <li>Tiểu hành tinh nhỏ sẽ bị phá hủy khi bị bắn trúng</li>
-            <li>Tránh va chạm với các tiểu hành tinh</li>
-            <li>Bạn có 3 mạng khi bắt đầu</li>
-            <li>Trò chơi kết thúc khi mất hết mạng</li>
+            <li>Destroy asteroids to score points</li>
+            <li>Large asteroids will split into medium asteroids when hit</li>
+            <li>Medium asteroids will split into small asteroids when hit</li>
+            <li>Small asteroids will be destroyed when hit</li>
+            <li>Avoid collisions with asteroids</li>
+            <li>You have 3 lives at the start</li>
+            <li>Game over when you lose all lives</li>
           </ul>
         </section>
 
         <section>
           <h2 className="text-xl font-semibold text-yellow-300 mb-2">
-            Cách chơi
+            How to Play
           </h2>
           <div className="space-y-3">
             <div>
-              <h3 className="font-medium text-green-300">Di chuyển</h3>
-              <p>Phím mũi tên hoặc WAS để điều khiển tàu</p>
+              <h3 className="font-medium text-green-300">Movement</h3>
+              <p>Arrow keys or WAD to control the ship</p>
               <ul className="list-disc pl-5">
                 <li>
-                  <Kbd>↑</Kbd> hoặc <Kbd>W</Kbd>: Đẩy tàu tiến lên
+                  <Kbd>↑</Kbd> or <Kbd>W</Kbd>: Thrust forward
                 </li>
                 <li>
-                  <Kbd>←</Kbd> hoặc <Kbd>A</Kbd>: Xoay tàu sang trái
+                  <Kbd>←</Kbd> or <Kbd>A</Kbd>: Rotate left
                 </li>
                 <li>
-                  <Kbd>→</Kbd> hoặc <Kbd>D</Kbd>: Xoay tàu sang phải
+                  <Kbd>→</Kbd> or <Kbd>D</Kbd>: Rotate right
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="font-medium text-green-300">Hành động</h3>
+              <h3 className="font-medium text-green-300">Actions</h3>
               <ul className="list-disc pl-5">
-                <li>Phím cách: Bắn</li>
+                <li>
+                  <Kbd>Space</Kbd>: Shoot
+                </li>
               </ul>
             </div>
           </div>
@@ -68,9 +65,9 @@ export const Guide = () => {
 
         <button
           onClick={() => setShouldShow(false)}
-          className="text-base w-full mt-6 bg-white hover:scale-105 transition-all duration-300 active:scale-95 p-3 rounded-xl text-black font-bold"
+          className="text-base font-sans w-full mt-6 bg-white hover:scale-105 transition-all duration-300 active:scale-95 p-3 rounded-xl text-black font-bold"
         >
-          Quẩy thôi
+          Got it, let's play!
         </button>
       </div>
     </div>

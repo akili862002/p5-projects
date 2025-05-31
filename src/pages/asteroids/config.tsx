@@ -19,3 +19,6 @@ export const BULLET_RADIUS = 3;
 // Asteroid
 export const ASTEROID_COLOR = "#a8a8a8";
 export const ASTEROID_MAX_SPEED = 7;
+
+// Point indicator
+export const POINT_INDICATOR_COLOR = "#74EFF8";
