@@ -1,5 +1,7 @@
-import { p, isDebug } from "./sketch";
+import { p, isDebug } from "../sketch";
 import P5, { Vector } from "p5";
+import { ASTEROID_COLOR } from "../config";
+import { hexToRgb } from "../utils";
 
 export class Asteroid {
   pos: P5.Vector;
@@ -10,6 +12,7 @@ export class Asteroid {
   vertexCount: number;
   rotationSpeed = p.random(-0.03, 0.03);
   maxSpeed = 9;
+  asteroidColor = hexToRgb(ASTEROID_COLOR);
 
   constructor(x: number, y: number, r: number) {
     this.r = r;
@@ -45,15 +48,11 @@ export class Asteroid {
     p.noStroke();
 
     // Draw asteroid with gradient shading
-    const c1 = p.color(180, 180, 180);
-    const c2 = p.color(100, 100, 100);
 
     p.beginShape();
+    p.fill(this.asteroidColor);
     for (let i = 0; i < this.vertices.length; i++) {
       const v = this.vertices[i];
-      const normalizedDist = v.mag() / this.r;
-      const c = p.lerpColor(c1, c2, normalizedDist);
-      p.fill(c);
       p.vertex(v.x, v.y);
     }
     p.endShape(p.CLOSE);

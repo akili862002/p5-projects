@@ -1,22 +1,28 @@
 import P5, { Vector } from "p5";
-import { Ship } from "./ship";
-import { Asteroid } from "./asteroid";
-import { Bullet } from "./bullet";
+import { Ship } from "./entities/ship";
+import { Asteroid } from "./entities/asteroid";
+import { Bullet } from "./entities/bullet";
+import { displayGameOver, displayHUD } from "./entities/hud";
+import { BACKGROUND_COLOR, DEBUG, LIVES } from "./config";
 
 export let p: P5;
 export let ship: Ship;
 export let isBoosting = false;
+
+// Images
 export let shipImg: P5.Image;
 export let bulletImg: P5.Image;
 export let firerImg: P5.Image;
+export let heartImage: P5.Image;
+
+// Colors
 export let backgroundColor: P5.Color;
-export let isDebug = false;
 
-// export let isDebug = true;
+export let isDebug = DEBUG;
 
-let score = 0;
-let lives = 3;
-let gameOver = false;
+export let score = 0;
+export let lives = LIVES;
+export let gameOver = false;
 
 export const sketch = (p5: P5) => {
   p = p5;
@@ -28,6 +34,7 @@ export const sketch = (p5: P5) => {
   p.preload = () => {
     shipImg = p.loadImage("/game/ship.png");
     firerImg = p.loadImage("/game/firer.png");
+    heartImage = p.loadImage("/game/heart.png");
     // shipImg = p.loadImage("/game/black-ship.png");
     // shipImg = p.loadImage("/game/red-ship.png");
     // bulletImg = p.loadImage("/game/bullet.png");
@@ -35,7 +42,7 @@ export const sketch = (p5: P5) => {
 
   p.setup = () => {
     p.createCanvas(innerWidth, innerHeight);
-    backgroundColor = p.color(30);
+    backgroundColor = p.color(BACKGROUND_COLOR);
     // p.createCheckbox("Debug").mousePressed(() => (isDebug = !isDebug));
     resetGame();
   };
@@ -265,56 +272,6 @@ export const sketch = (p5: P5) => {
     if (p.keyIsDown(p.RIGHT_ARROW) || p.keyIsDown(68)) {
       ship.rotation += 0.05;
     }
-  };
-
-  const displayHUD = () => {
-    p.fill(255);
-    p.textSize(20);
-    p.textAlign(p.LEFT);
-    p.text(`Score: ${score}`, 20, 30);
-    p.textAlign(p.RIGHT);
-    p.text(`Lives: ${lives}`, p.width - 20, 30);
-
-    displaySpeed();
-  };
-
-  const displaySpeed = () => {
-    // Speed progress bar
-    const barWidth = 150;
-    const barHeight = 10;
-    const barX = p.width - barWidth - 10;
-    const barY = p.height - barHeight - 10;
-
-    // Draw the empty bar background
-    p.fill(50);
-    p.noStroke();
-    p.rect(barX, barY, barWidth, barHeight);
-
-    // Calculate the fill width based on current speed relative to max speed
-    const speedRatio = p.constrain(ship.vel.mag() / ship.maxSpeed, 0, 1);
-    const fillWidth = barWidth * speedRatio;
-
-    // Draw the filled portion with color gradient from green to red
-    if (fillWidth > 0) {
-      p.fill(255);
-      p.rect(barX, barY, fillWidth, barHeight);
-    }
-
-    p.fill(255);
-    p.textSize(14);
-    p.textAlign(p.CENTER);
-    p.text(`${ship.vel.mag().toFixed(2)}`, p.width - 25, barY - 10);
-  };
-
-  const displayGameOver = () => {
-    p.fill(255);
-    p.textSize(50);
-    p.textAlign(p.CENTER);
-    p.text("GAME OVER", p.width / 2, p.height / 2 - 50);
-    p.textSize(30);
-    p.text(`Final Score: ${score}`, p.width / 2, p.height / 2 + 20);
-    p.textSize(20);
-    p.text("Press ENTER to play again", p.width / 2, p.height / 2 + 70);
   };
 
   p.keyPressed = (e: any) => {

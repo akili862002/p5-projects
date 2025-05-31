@@ -1,6 +1,12 @@
 import P5, { Vector } from "p5";
-import { firerImg, isBoosting, isDebug, p, shipImg } from "./sketch";
+import { firerImg, isBoosting, isDebug, p, shipImg } from "../sketch";
 import { Asteroid } from "./asteroid";
+import {
+  SHIP_MAX_SPEED,
+  SHIP_FRICTION,
+  SHIP_INVINCIBLE_TIME,
+  SHIP_MAX_ROTATION,
+} from "../config";
 
 export class Ship {
   pos: P5.Vector;
@@ -9,11 +15,13 @@ export class Ship {
   r = 20;
   heading: number;
   rotation = 0;
-  maxSpeed = 10;
-  friction = 0.99;
+  maxSpeed = SHIP_MAX_SPEED;
+  friction = SHIP_FRICTION;
   invincible = false;
   invincibleTimer = 0;
-  maxRotation = 0.1;
+  maxRotation = SHIP_MAX_ROTATION;
+  positionHistory: P5.Vector[] = [];
+  maxHistoryLength = 60; // Store positions for 60 frames
 
   constructor(x: number, y: number) {
     this.pos = p.createVector(x, y);
@@ -21,7 +29,7 @@ export class Ship {
     this.acc = p.createVector(0, 0);
     this.heading = -p.PI / 2;
     this.invincible = true;
-    this.invincibleTimer = 120; // Invincible for 2 seconds (60 frames per second)
+    this.invincibleTimer = SHIP_INVINCIBLE_TIME;
   }
 
   update() {
