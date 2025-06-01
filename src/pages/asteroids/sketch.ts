@@ -29,7 +29,7 @@ export let gameOver = false;
 let pointIndicators: PointIndicator;
 
 // Get sound manager instance
-const soundManager = SoundManager.getInstance();
+let soundManager: SoundManager;
 
 export const sketch = (p5: P5) => {
   p = p5;
@@ -52,38 +52,8 @@ export const sketch = (p5: P5) => {
     p.createCanvas(innerWidth, innerHeight);
     backgroundColor = p.color(BACKGROUND_COLOR);
     pointIndicators = new PointIndicator();
+    soundManager = SoundManager.getInstance();
     resetGame();
-  };
-
-  const resetGame = () => {
-    ship = new Ship(p.width / 2, p.height / 2);
-    asteroids = [];
-    bullets = [];
-    score = 0;
-    lives = 3;
-    gameOver = false;
-
-    // Create initial asteroids
-    for (let i = 0; i < 8; i++) {
-      createAsteroid();
-    }
-  };
-
-  const createAsteroid = (x?: number, y?: number, size?: number) => {
-    const newX = x ?? p.random(0, p.width);
-    const newY = y ?? p.random(0, p.height);
-    const newSize = size ?? p.random(30, 50);
-
-    // Ensure asteroids don't spawn too close to the ship
-    const shipDist = p.dist(newX, newY, ship.pos.x, ship.pos.y);
-    if (shipDist < 200 && x === undefined) {
-      return createAsteroid();
-    }
-
-    const newAsteroid = new Asteroid(newX, newY, newSize);
-    asteroids.push(newAsteroid);
-
-    return newAsteroid;
   };
 
   p.draw = () => {
@@ -130,6 +100,37 @@ export const sketch = (p5: P5) => {
 
       checkBulletAsteroidCollisions(bullet, i);
     }
+  };
+
+  const resetGame = () => {
+    ship = new Ship(p.width / 2, p.height / 2);
+    asteroids = [];
+    bullets = [];
+    score = 0;
+    lives = 3;
+    gameOver = false;
+
+    // Create initial asteroids
+    for (let i = 0; i < 8; i++) {
+      createAsteroid();
+    }
+  };
+
+  const createAsteroid = (x?: number, y?: number, size?: number) => {
+    const newX = x ?? p.random(0, p.width);
+    const newY = y ?? p.random(0, p.height);
+    const newSize = size ?? p.random(30, 50);
+
+    // Ensure asteroids don't spawn too close to the ship
+    const shipDist = p.dist(newX, newY, ship.pos.x, ship.pos.y);
+    if (shipDist < 200 && x === undefined) {
+      return createAsteroid();
+    }
+
+    const newAsteroid = new Asteroid(newX, newY, newSize);
+    asteroids.push(newAsteroid);
+
+    return newAsteroid;
   };
 
   const checkBulletAsteroidCollisions = (

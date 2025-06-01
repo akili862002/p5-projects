@@ -1,17 +1,27 @@
+import P5 from "p5";
+
 export class SoundManager {
   private static instance: SoundManager;
-  private sounds: { [key: string]: HTMLAudioElement } = {};
   private soundPaths = {
     shoot: "/game/sounds/shoot.mp3",
     asteroidExplosion: "/game/sounds/asteroid-explosion.mp3",
   };
   isMuted = false;
+  volume = 0.7;
+  unmuteIcon: P5.Image;
+  muteIcon: P5.Image;
 
   private constructor() {
-    // Preload sounds
-    Object.entries(this.soundPaths).forEach(([key, path]) => {
-      this.preloadSound(key, path);
-    });
+    this.loadSounds();
+  }
+
+  private loadSounds() {
+    for (const [key, path] of Object.entries(this.soundPaths)) {
+      const sound = new Audio(path);
+      sound.volume = this.volume;
+      sound.preload = "auto";
+      sound.load();
+    }
   }
 
   public static getInstance(): SoundManager {
@@ -21,27 +31,12 @@ export class SoundManager {
     return SoundManager.instance;
   }
 
-  public preloadSound(key: string, path: string): void {
-    const audio = new Audio(path);
-    audio.preload = "auto";
-
-    // Add error handling
-    audio.addEventListener("error", (e) => {
-      console.error(`Error loading sound ${key} from ${path}:`, e);
-    });
-
-    // Load the audio
-    audio.load();
-
-    this.sounds[key] = audio;
-  }
-
-  public playSound(key: string): void {
-    if (this.isMuted || !this.sounds[key]) return;
+  public playSound(key: keyof typeof this.soundPaths): void {
+    if (this.isMuted) return;
 
     try {
-      // Clone the audio element to allow overlapping sounds
-      const sound = this.sounds[key].cloneNode(true) as HTMLAudioElement;
+      const sound = new Audio(this.soundPaths[key]);
+      sound.volume = this.volume;
       sound.play().catch((error) => {
         console.error(`Error playing sound ${key}:`, error);
       });
