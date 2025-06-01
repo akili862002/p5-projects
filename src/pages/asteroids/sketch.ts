@@ -3,7 +3,7 @@ import { Ship } from "./entities/ship";
 import { Asteroid } from "./entities/asteroid";
 import { Bullet } from "./entities/bullet";
 import { displayGameOver, displayHUD } from "./entities/hud";
-import { BACKGROUND_COLOR, DEBUG, LIVES } from "./config";
+import { BACKGROUND_COLOR, DEBUG, LIVES, SHIP_KNOCKBACK_FORCE } from "./config";
 import { SoundManager } from "./sound-manager";
 import { PointIndicator } from "./point-indicator";
 
@@ -319,8 +319,10 @@ export const sketch = (p5: P5) => {
     bullets.push(newBullet);
 
     // make the ship block back
-    const knockbackForce = Vector.fromAngle(ship.heading).mult(-0.5);
-    ship.vel.add(knockbackForce);
+    const knockbackForce = Vector.fromAngle(ship.heading).mult(
+      -SHIP_KNOCKBACK_FORCE
+    );
+    ship.applyForce(knockbackForce);
 
     return newBullet;
   };

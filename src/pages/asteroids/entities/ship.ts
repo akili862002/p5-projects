@@ -6,6 +6,7 @@ import {
   SHIP_FRICTION,
   SHIP_INVINCIBLE_TIME,
   SHIP_MAX_ROTATION,
+  SHIP_BOOST_FORCE,
 } from "../config";
 
 export class Ship {
@@ -70,6 +71,12 @@ export class Ship {
       p.tint(255, 150); // Semi-transparent
     }
 
+    // if (this.vel.mag() > 0.1) {
+    //   p.fill(116, 239, 248, 50);
+    //   p.circle(0, 0, this.r * 3);
+    //   p.fill(255, 255, 255, 255);
+    // }
+
     p.imageMode(p.CENTER);
     p.image(shipImg, 0, 0, this.r * 2, this.r * 2);
 
@@ -107,7 +114,7 @@ export class Ship {
   }
 
   boost() {
-    const force = Vector.fromAngle(this.heading).mult(0.15);
+    const force = Vector.fromAngle(this.heading).mult(SHIP_BOOST_FORCE);
     this.applyForce(force);
   }
 

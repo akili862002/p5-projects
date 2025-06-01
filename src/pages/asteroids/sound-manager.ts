@@ -6,7 +6,7 @@ export class SoundManager {
     shoot: "/game/sounds/shoot.mp3",
     asteroidExplosion: "/game/sounds/asteroid-explosion.mp3",
   };
-  isMuted = false;
+  isMuted = true;
   volume = 0.7;
   unmuteIcon: P5.Image;
   muteIcon: P5.Image;
