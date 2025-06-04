@@ -35,11 +35,20 @@ export class Rocket {
     const angle = this.vel.heading() + p.PI / 2;
     p.rotate(angle);
 
+    if (!this.allowLaunch) {
+      // Draw a red circle to warning the player
+      // Create a pulsating effect for the warning circle
+      const pulseAmount = p.sin(p.frameCount * 0.1) * 20 + 50; // Values between 30-70
+      p.fill(255, 0, 0, pulseAmount);
+      p.circle(0, 0, 40);
+    }
+
     // Use the rocket image instead of drawing shapes
     p.imageMode(p.CENTER);
     p.image(rocketImg, 0, 0, 30, 30);
 
-    if (this.allowLaunch) {
+    const vel = this.vel.mag();
+    if (this.allowLaunch && vel > 1) {
       p.translate(0, 20);
       p.image(firerImg, 0, 0, 15, 15);
     }

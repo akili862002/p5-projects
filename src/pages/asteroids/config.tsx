@@ -24,13 +24,15 @@ export const ASTEROID_COLOR = "#a8a8a8";
 export const ASTEROID_MAX_SPEED = 8;
 export const ASTEROID_GENERATE_INTERVAL = 300; // 5 seconds
 export const ASTEROID_MAX_GENERATE = 12;
+export const ASTEROID_SPLIT_COUNT = 2;
+export const ASTEROID_INITIAL_COUNT = 8;
 
 // Point indicator
 export const POINT_INDICATOR_COLOR = "#74EFF8";
 
 // Rocket
 export const ROCKET_COLOR = "#74EFF8";
-export const ROCKET_MAX_SPEED = 10;
+export const ROCKET_MAX_SPEED = 9;
 export const ROCKET_GENERATE_INTERVAL = 600; // 10 seconds
 export const ROCKET_MAX_GENERATE = 5;
 export const ROCKET_LIFESPAN = 700;

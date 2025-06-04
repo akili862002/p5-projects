@@ -12,6 +12,8 @@ import {
   ASTEROID_MAX_GENERATE,
   ROCKET_GENERATE_INTERVAL,
   ROCKET_MAX_GENERATE,
+  ASTEROID_INITIAL_COUNT,
+  ASTEROID_SPLIT_COUNT,
 } from "./config";
 import { SoundManager } from "./sound-manager";
 import { PointIndicator } from "./point-indicator";
@@ -169,7 +171,7 @@ export function sketch(p5: P5) {
           // Break asteroid into smaller pieces if large enough
           if (asteroid.r > 20) {
             const newSize = asteroid.r / 2;
-            for (let k = 0; k < 2; k++) {
+            for (let k = 0; k < ASTEROID_SPLIT_COUNT; k++) {
               const angle = p.random(0, p.TWO_PI);
               const newAsteroid = createAsteroid(
                 asteroid.pos.x,
@@ -203,10 +205,11 @@ export function sketch(p5: P5) {
     gameOver = false;
 
     // Create initial asteroids
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < ASTEROID_INITIAL_COUNT; i++) {
       createAsteroid();
     }
 
+    createRocket();
     createRocket();
   };
 
