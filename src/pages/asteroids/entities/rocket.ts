@@ -1,6 +1,10 @@
 import { Vector } from "p5";
 import { p } from "../sketch";
-import { ROCKET_LIFESPAN, ROCKET_MAX_SPEED } from "../config";
+import {
+  ROCKET_LIFESPAN,
+  ROCKET_MAX_SPEED,
+  ROCKET_STEER_FORCE,
+} from "../config";
 import { rocketImg, firerImg } from "../sketch";
 
 export class Rocket {
@@ -10,7 +14,7 @@ export class Rocket {
   r = 4;
   lifespan = ROCKET_LIFESPAN;
   allowLaunch = false;
-  trackingForce = 0.04;
+  trackingForce = ROCKET_STEER_FORCE;
 
   constructor(x: number, y: number) {
     this.pos = p.createVector(x, y);
