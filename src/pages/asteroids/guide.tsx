@@ -1,12 +1,11 @@
-import { useState } from "react";
 import { useLocalStorage } from "react-use";
 
 export const Guide = () => {
-  // const [shouldShow, setShouldShow] = useLocalStorage<boolean>(
-  //   "show-asteroids-guide",
-  //   true
-  // );
-  const [shouldShow, setShouldShow] = useState<boolean>(true);
+  const [shouldShow, setShouldShow] = useLocalStorage<boolean>(
+    "show-asteroids-guide",
+    true
+  );
+  // const [shouldShow, setShouldShow] = useState<boolean>(true);
 
   if (!shouldShow) {
     return null;

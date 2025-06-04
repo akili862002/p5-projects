@@ -45,4 +45,8 @@ export class PointIndicator {
       p.text(`+${item.value}`, item.x, item.y);
     }
   }
+
+  reset() {
+    this.items = [];
+  }
 }

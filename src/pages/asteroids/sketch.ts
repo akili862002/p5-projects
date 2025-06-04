@@ -2,10 +2,20 @@ import P5, { Vector } from "p5";
 import { Ship } from "./entities/ship";
 import { Asteroid } from "./entities/asteroid";
 import { Bullet } from "./entities/bullet";
-import { displayGameOver, displayHUD } from "./entities/hud";
-import { BACKGROUND_COLOR, DEBUG, LIVES, SHIP_KNOCKBACK_FORCE } from "./config";
+import { displayGameOver, displayHUD } from "./hud";
+import {
+  BACKGROUND_COLOR,
+  DEBUG,
+  LIVES,
+  SHIP_KNOCKBACK_FORCE,
+  ASTEROID_GENERATE_INTERVAL,
+  ASTEROID_MAX_GENERATE,
+  ROCKET_GENERATE_INTERVAL,
+  ROCKET_MAX_GENERATE,
+} from "./config";
 import { SoundManager } from "./sound-manager";
 import { PointIndicator } from "./point-indicator";
+import { Rocket } from "./entities/rocket";
 
 export let p: P5;
 export let ship: Ship;
@@ -16,6 +26,7 @@ export let shipImg: P5.Image;
 export let bulletImg: P5.Image;
 export let firerImg: P5.Image;
 export let heartImage: P5.Image;
+export let rocketImg: P5.Image;
 
 // Colors
 export let backgroundColor: P5.Color;
@@ -31,10 +42,11 @@ let pointIndicators: PointIndicator;
 // Get sound manager instance
 let soundManager: SoundManager;
 
-export const sketch = (p5: P5) => {
+export function sketch(p5: P5) {
   p = p5;
   let asteroids: Asteroid[] = [];
   let bullets: Bullet[] = [];
+  let rockets: Rocket[] = [];
 
   // let isDebug = true;
 
@@ -42,6 +54,7 @@ export const sketch = (p5: P5) => {
     shipImg = p.loadImage("/game/ship.png");
     firerImg = p.loadImage("/game/firer.png");
     heartImage = p.loadImage("/game/heart.png");
+    rocketImg = p.loadImage("/game/rocket.png");
     // shipImg = p.loadImage("/game/black-ship.png");
     // shipImg = p.loadImage("/game/red-ship.png");
     // bulletImg = p.loadImage("/game/bullet.png");
@@ -64,18 +77,30 @@ export const sketch = (p5: P5) => {
       return;
     }
 
-    updateAndDrawShip();
     updateAndDrawBullets();
     updateAndDrawAsteroids();
     handleShipControls();
+    updateAndDrawRockets();
+    updateAndDrawShip();
     displayHUD();
 
     pointIndicators.update();
     pointIndicators.draw();
 
     // Create new asteroids periodically
-    if (p.frameCount % 300 === 0 && asteroids.length < 12) {
+    // Create every 5s
+    if (
+      p.frameCount % ASTEROID_GENERATE_INTERVAL === 0 &&
+      asteroids.length < ASTEROID_MAX_GENERATE
+    ) {
       createAsteroid();
+    }
+
+    if (
+      p.frameCount % ROCKET_GENERATE_INTERVAL === 0 &&
+      rockets.length < ROCKET_MAX_GENERATE
+    ) {
+      createRocket();
     }
   };
 
@@ -102,10 +127,77 @@ export const sketch = (p5: P5) => {
     }
   };
 
+  const updateAndDrawRockets = () => {
+    for (let i = rockets.length - 1; i >= 0; i--) {
+      const rocket = rockets[i];
+      rocket.update();
+      rocket.draw();
+      rocket.tracking(ship.pos);
+      rocket.edges();
+
+      if (rocket.shouldRemove()) {
+        rockets.splice(i, 1);
+      }
+
+      // Check if rocket collides with ship
+      if (rocket.intersects(ship)) {
+        rockets.splice(i, 1);
+        lives--;
+        soundManager.playAsteroidExplosionSound();
+
+        if (lives <= 0) {
+          gameOver = true;
+        } else {
+          ship = new Ship(p.width / 2, p.height / 2);
+        }
+        continue;
+      }
+
+      for (let j = asteroids.length - 1; j >= 0; j--) {
+        const asteroid = asteroids[j];
+        if (rocket.intersects(asteroid)) {
+          rockets.splice(i, 1);
+
+          // Play explosion sound
+          soundManager.playAsteroidExplosionSound();
+
+          // Award points based on asteroid size
+          const points = Math.floor(150 / asteroid.r);
+          score += points;
+          pointIndicators.add(points, asteroid.pos.x, asteroid.pos.y);
+
+          // Break asteroid into smaller pieces if large enough
+          if (asteroid.r > 20) {
+            const newSize = asteroid.r / 2;
+            for (let k = 0; k < 2; k++) {
+              const angle = p.random(0, p.TWO_PI);
+              const newAsteroid = createAsteroid(
+                asteroid.pos.x,
+                asteroid.pos.y,
+                newSize
+              );
+              newAsteroid.vel = Vector.fromAngle(angle).mult(2);
+            }
+          }
+
+          asteroids.splice(j, 1);
+
+          // Create new asteroid if too few remain
+          if (asteroids.length < 5) {
+            createAsteroid();
+          }
+          break;
+        }
+      }
+    }
+  };
+
   const resetGame = () => {
     ship = new Ship(p.width / 2, p.height / 2);
     asteroids = [];
     bullets = [];
+    rockets = [];
+    pointIndicators.reset();
     score = 0;
     lives = 3;
     gameOver = false;
@@ -114,6 +206,22 @@ export const sketch = (p5: P5) => {
     for (let i = 0; i < 8; i++) {
       createAsteroid();
     }
+
+    createRocket();
+  };
+
+  const createRocket = () => {
+    const newX = p.random(0, p.width);
+    const newY = p.random(0, p.height);
+
+    // Ensure rockets don't spawn too close to the ship
+    const shipDist = p.dist(newX, newY, ship.pos.x, ship.pos.y);
+    if (shipDist < 250) {
+      return createRocket();
+    }
+
+    const rocket = new Rocket(newX, newY);
+    rockets.push(rocket);
   };
 
   const createAsteroid = (x?: number, y?: number, size?: number) => {
@@ -285,10 +393,10 @@ export const sketch = (p5: P5) => {
 
   const handleShipControls = () => {
     if (p.keyIsDown(p.LEFT_ARROW) || p.keyIsDown(65)) {
-      ship.rotation -= 0.05;
+      ship.rotation -= 0.037;
     }
     if (p.keyIsDown(p.RIGHT_ARROW) || p.keyIsDown(68)) {
-      ship.rotation += 0.05;
+      ship.rotation += 0.037;
     }
   };
 
@@ -332,4 +440,4 @@ export const sketch = (p5: P5) => {
       isBoosting = false;
     }
   };
-};
+}

@@ -1,4 +1,4 @@
-import { heartImage, lives, p, score, ship } from "../sketch";
+import { heartImage, lives, p, score, ship } from "./sketch";
 import P5 from "p5";
 
 // Add animation variables for score display
