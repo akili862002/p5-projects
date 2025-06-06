@@ -16,7 +16,7 @@ export const SHIP_BOOST_FORCE = 0.15;
 // Bullet
 export const BULLET_COLOR = "#74EFF8";
 export const BULLET_LIFESPAN = 70; // Frames until bullet disappears
-export const BULLET_SPEED = 12;
+export const BULLET_SPEED = 10;
 export const BULLET_RADIUS = 3;
 
 // Asteroid

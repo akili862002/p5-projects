@@ -1,5 +1,5 @@
 import P5, { Vector } from "p5";
-import { firerImg, isBoosting, isDebug, p, shipImg } from "../sketch";
+import { firerImg, isDebug, p, shipImg } from "../sketch";
 import { Asteroid } from "./asteroid";
 import {
   SHIP_MAX_SPEED,
@@ -23,6 +23,7 @@ export class Ship {
   maxRotation = SHIP_MAX_ROTATION;
   positionHistory: P5.Vector[] = [];
   maxHistoryLength = 60; // Store positions for 60 frames
+  isBoosting = false;
 
   constructor(x: number, y: number) {
     this.pos = p.createVector(x, y);
@@ -81,7 +82,7 @@ export class Ship {
     p.image(shipImg, 0, 0, this.r * 2, this.r * 2);
 
     // Draw thruster when boosting
-    if (isBoosting) {
+    if (this.isBoosting) {
       p.push();
       p.translate(0, this.r * 1.8);
       const scale = 1.3;

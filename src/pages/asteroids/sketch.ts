@@ -18,10 +18,10 @@ import {
 import { SoundManager } from "./sound-manager";
 import { PointIndicator } from "./point-indicator";
 import { Rocket } from "./entities/rocket";
+import { ExplosionEffect } from "./entities/explosion-effect";
 
 export let p: P5;
 export let ship: Ship;
-export let isBoosting = false;
 
 // Images
 export let shipImg: P5.Image;
@@ -49,6 +49,8 @@ export function sketch(p5: P5) {
   let asteroids: Asteroid[] = [];
   let bullets: Bullet[] = [];
   let rockets: Rocket[] = [];
+  let lastFireTime = 0;
+  let explosionEffects: ExplosionEffect[] = [];
 
   // let isDebug = true;
 
@@ -89,6 +91,14 @@ export function sketch(p5: P5) {
     pointIndicators.update();
     pointIndicators.draw();
 
+    for (let explosionEffect of explosionEffects) {
+      explosionEffect.update();
+      explosionEffect.draw();
+      if (explosionEffect.shouldRemove()) {
+        explosionEffects.splice(explosionEffects.indexOf(explosionEffect), 1);
+      }
+    }
+
     // Create new asteroids periodically
     // Create every 5s
     if (
@@ -110,7 +120,7 @@ export function sketch(p5: P5) {
     ship.update();
     ship.draw();
     ship.edges();
-    if (isBoosting) ship.boost();
+    if (ship.isBoosting) ship.boost();
   };
 
   const updateAndDrawBullets = () => {
@@ -142,10 +152,17 @@ export function sketch(p5: P5) {
       }
 
       // Check if rocket collides with ship
-      if (rocket.intersects(ship)) {
+      if (rocket.intersects(ship) && !ship.invincible) {
         rockets.splice(i, 1);
         lives--;
         soundManager.playAsteroidExplosionSound();
+
+        // Create explosion effect
+        const explosionPos = ship.pos.copy();
+        const explosionVel = rocket.vel.copy().add(ship.vel);
+        explosionEffects.push(
+          new ExplosionEffect(explosionPos, explosionVel, 100, 180)
+        );
 
         if (lives <= 0) {
           gameOver = true;
@@ -199,6 +216,7 @@ export function sketch(p5: P5) {
     asteroids = [];
     bullets = [];
     rockets = [];
+    explosionEffects = [];
     pointIndicators.reset();
     score = 0;
     lives = 3;
@@ -208,9 +226,6 @@ export function sketch(p5: P5) {
     for (let i = 0; i < ASTEROID_INITIAL_COUNT; i++) {
       createAsteroid();
     }
-
-    createRocket();
-    createRocket();
   };
 
   const createRocket = () => {
@@ -382,6 +397,17 @@ export function sketch(p5: P5) {
   ) => {
     if (ship.intersects(asteroid)) {
       lives--;
+
+      // Create explosion effect
+      const explosionPos = ship.pos.copy();
+      const explosionVel = ship.vel.copy().add(asteroid.vel);
+      explosionEffects.push(
+        new ExplosionEffect(explosionPos, explosionVel, 100, 180)
+      );
+
+      // Play explosion sound
+      soundManager.playAsteroidExplosionSound();
+
       if (lives <= 0) {
         gameOver = true;
       } else {
@@ -401,17 +427,21 @@ export function sketch(p5: P5) {
     if (p.keyIsDown(p.RIGHT_ARROW) || p.keyIsDown(68)) {
       ship.rotation += 0.037;
     }
+    if (p.keyIsDown(32)) {
+      const now = p.millis();
+      if (now - lastFireTime > 150) {
+        const bullet = fire();
+        if (bullet) {
+          soundManager.playFireSound();
+          lastFireTime = now;
+        }
+      }
+    }
   };
 
   p.keyPressed = (e: any) => {
     if (e.key === "ArrowUp" || e.key.toLowerCase() === "w") {
-      isBoosting = true;
-    }
-    if (e.key === " ") {
-      const bullet = fire();
-      if (bullet) {
-        soundManager.playFireSound();
-      }
+      ship.isBoosting = true;
     }
     if (e.key === "Enter" && gameOver) {
       resetGame();
@@ -440,7 +470,7 @@ export function sketch(p5: P5) {
 
   p.keyReleased = (e: any) => {
     if (e.key === "ArrowUp" || e.key.toLowerCase() === "w") {
-      isBoosting = false;
+      ship.isBoosting = false;
     }
   };
 }
