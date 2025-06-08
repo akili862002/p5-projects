@@ -1,3 +1,4 @@
+import { ScoreManager } from "./score";
 import { heartImage, lives, p, score, ship } from "./sketch";
 import P5 from "p5";
 
@@ -39,21 +40,17 @@ const updateScoreAnimation = () => {
 };
 
 const displayScore = () => {
-  p.fill(255);
-  p.textSize(20);
+  p.fill(111, 215, 237);
+  const fontSize = 44;
+  p.textSize(fontSize);
   p.textAlign(p.LEFT);
-  p.text(`Score`, 20, p.height - 20);
-
-  p.fill(scoreColor);
-  p.textSize(scoreSize);
-  p.textAlign(p.LEFT);
-  p.text(`${score}`, 80, p.height - 20);
+  p.text(`${score}`, 20, 10 + fontSize);
 };
 
 const displayLives = () => {
   const heartSize = 40;
   const heartY = 10;
-  const gap = -3; // Increased gap between hearts
+  const gap = 3; // Increased gap between hearts
   // Display lives dynamically based on current lives count
   for (let i = 0; i < 3; i++) {
     const heartX = p.width - (i + 1) * (heartSize + gap) - 10;
@@ -81,28 +78,63 @@ const displaySpeed = () => {
   p.rect(barX, barY, barWidth, barHeight);
 
   // Calculate the fill width based on current speed relative to max speed
-  const speedRatio = p.constrain(ship.vel.mag() / ship.maxSpeed, 0, 1);
+  const speedRatio = ship
+    ? p.constrain(ship.vel.mag() / ship.maxSpeed, 0, 1)
+    : 0;
   const fillWidth = barWidth * speedRatio;
 
   // Draw the filled portion with color gradient from green to red
   if (fillWidth > 0) {
-    p.fill(255);
+    p.fill(253, 190, 111);
     p.rect(barX, barY, fillWidth, barHeight);
   }
 
   p.fill(255);
   p.textSize(14);
   p.textAlign(p.CENTER);
-  p.text(`${ship.vel.mag().toFixed(2)}`, p.width - 25, barY - 10);
+  p.text(`${ship?.vel.mag().toFixed(2)}`, p.width - 25, barY - 10);
 };
-
 export const displayGameOver = () => {
-  p.fill(255);
-  p.textSize(50);
+  const highScore = ScoreManager.getHighScore();
+  const topScores = ScoreManager.getTopScores().slice(0, 5);
+
+  // Animate the game over text with a pulsating effect
+  const pulseAmount = p.sin(p.frameCount * 0.1) * 20 + 235; // Values between 215-255
+  p.fill(255, pulseAmount);
+  p.textSize(60);
   p.textAlign(p.CENTER);
-  p.text("GAME OVER", p.width / 2, p.height / 2 - 50);
-  p.textSize(30);
-  p.text(`Final Score: ${score}`, p.width / 2, p.height / 2 + 20);
+  p.text("GAME OVER", p.width / 2, p.height / 2 - 100);
+
+  // Display final score with a highlight if it's a new high score
+  p.fill(255);
+  p.textSize(32);
+  if (score >= highScore) {
+    p.fill(255, 215, 0); // Gold color for high score
+    p.text(`NEW HIGH SCORE: ${score}!`, p.width / 2, p.height / 2 - 40);
+  } else {
+    p.text(`Your Score: ${score}`, p.width / 2, p.height / 2 - 40);
+    p.text(`High Score: ${highScore}`, p.width / 2, p.height / 2);
+  }
+
+  // Display top scores
+  p.fill(200, 200, 255);
   p.textSize(20);
-  p.text("Press ENTER to play again", p.width / 2, p.height / 2 + 70);
+  p.text("TOP SCORES", p.width / 2, p.height / 2 + 40);
+
+  p.textSize(16);
+  topScores.forEach((entry, index) => {
+    p.fill(255);
+    if (entry.score === score) p.fill(255, 255, 0); // Highlight current score
+    p.text(
+      `${index + 1}. ${entry.playerName}: ${entry.score}`,
+      p.width / 2,
+      p.height / 2 + 70 + index * 25
+    );
+  });
+
+  // Flashing "Press any key" text
+  const flashRate = p.sin(p.frameCount * 0.2) * 127 + 128;
+  p.fill(255, flashRate);
+  p.textSize(24);
+  p.text("Press any key to play again", p.width / 2, p.height / 2 + 300);
 };

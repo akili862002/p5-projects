@@ -15,12 +15,14 @@ export class PointIndicator {
   color = hexToRgbValues(POINT_INDICATOR_COLOR);
 
   add(value: number, x: number, y: number) {
+    const additionalSize = Math.floor(value / 100);
+
     this.items.push({
       value,
       x,
       y,
       opacity: 255,
-      size: 16 + value,
+      size: 16 + additionalSize,
     });
   }
 

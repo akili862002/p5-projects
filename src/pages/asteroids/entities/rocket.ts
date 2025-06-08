@@ -43,7 +43,7 @@ export class Rocket {
       // Draw a red circle to warning the player
       // Create a pulsating effect for the warning circle
       const pulseAmount = p.sin(p.frameCount * 0.1) * 20 + 50; // Values between 30-70
-      p.fill(255, 0, 0, pulseAmount);
+      p.fill(255, 69, 90, pulseAmount);
       p.circle(0, 0, 40);
     }
 

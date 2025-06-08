@@ -1,6 +1,10 @@
 import { p, isDebug } from "../sketch";
 import P5, { Vector } from "p5";
-import { ASTEROID_COLOR, ASTEROID_MAX_SPEED } from "../config";
+import {
+  ASTEROID_COLOR,
+  ASTEROID_MAX_SPEED,
+  BACKGROUND_COLOR,
+} from "../config";
 import { hexToRgb } from "../utils";
 
 export class Asteroid {
@@ -50,7 +54,10 @@ export class Asteroid {
     // Draw asteroid with gradient shading
 
     p.beginShape();
-    p.fill(this.asteroidColor);
+    // p.fill(this.asteroidColor);
+    p.fill(36, 31, 23);
+    p.stroke(this.asteroidColor);
+    p.strokeWeight(2);
     for (let i = 0; i < this.vertices.length; i++) {
       const v = this.vertices[i];
       p.vertex(v.x, v.y);
@@ -86,5 +93,52 @@ export class Asteroid {
   intersectsAsteroid(other: Asteroid) {
     const d = this.pos.dist(other.pos);
     return d < this.r + other.r;
+  }
+
+  collision(other: Asteroid) {
+    // Collision response - elastic collision based on radius (mass)
+    const dx = other.pos.x - this.pos.x;
+    const dy = other.pos.y - this.pos.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Calculate mass based on radius (area proportional to mass)
+    const m1 = this.r * this.r;
+    const m2 = other.r * other.r;
+
+    // Calculate normal vectors for collision
+    const normalX = dx / distance;
+    const normalY = dy / distance;
+
+    // Calculate relative velocity along normal
+    const relVelX = other.vel.x - this.vel.x;
+    const relVelY = other.vel.y - this.vel.y;
+    const relVelDotNormal = relVelX * normalX + relVelY * normalY;
+
+    // If asteroids are moving away from each other, skip collision response
+    if (relVelDotNormal > 0) return;
+
+    // Calculate impulse scalar
+    const impulseScalar = (2 * relVelDotNormal) / (1 / m1 + 1 / m2);
+
+    // Apply impulse to velocities
+    const impulseX = normalX * impulseScalar;
+    const impulseY = normalY * impulseScalar;
+
+    this.vel.x += impulseX / m1;
+    this.vel.y += impulseY / m1;
+    other.vel.x -= impulseX / m2;
+    other.vel.y -= impulseY / m2;
+
+    // Push asteroids apart slightly to prevent sticking
+    const overlap = this.r + other.r - distance;
+    if (overlap > 0) {
+      const pushRatio1 = m2 / (m1 + m2);
+      const pushRatio2 = m1 / (m1 + m2);
+
+      this.pos.x -= normalX * overlap * pushRatio1;
+      this.pos.y -= normalY * overlap * pushRatio1;
+      other.pos.x += normalX * overlap * pushRatio2;
+      other.pos.y += normalY * overlap * pushRatio2;
+    }
   }
 }

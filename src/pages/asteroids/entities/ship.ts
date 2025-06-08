@@ -7,13 +7,15 @@ import {
   SHIP_INVINCIBLE_TIME,
   SHIP_MAX_ROTATION,
   SHIP_BOOST_FORCE,
+  SHIP_KNOCKBACK_FORCE,
 } from "../config";
+import { Bullet } from "./bullet";
 
 export class Ship {
   pos: P5.Vector;
   vel: P5.Vector;
   acc: P5.Vector;
-  r = 20;
+  r = 24;
   heading: number;
   rotation = 0;
   maxSpeed = SHIP_MAX_SPEED;
@@ -24,6 +26,8 @@ export class Ship {
   positionHistory: P5.Vector[] = [];
   maxHistoryLength = 60; // Store positions for 60 frames
   isBoosting = false;
+  lastFireTime = 0;
+  minFireInterval = 150;
 
   constructor(x: number, y: number) {
     this.pos = p.createVector(x, y);
@@ -49,7 +53,7 @@ export class Ship {
     this.pos.add(this.vel);
     this.acc.mult(0);
 
-    // Handle invincibility timer
+    // Handl e invincibility timer
     if (this.invincible) {
       this.invincibleTimer--;
       if (this.invincibleTimer <= 0) {
@@ -79,7 +83,10 @@ export class Ship {
     // }
 
     p.imageMode(p.CENTER);
-    p.image(shipImg, 0, 0, this.r * 2, this.r * 2);
+    const width = this.r * 2;
+    const aspect = 1;
+    const height = width / aspect;
+    p.image(shipImg, 0, 0, width, height);
 
     // Draw thruster when boosting
     if (this.isBoosting) {
@@ -115,7 +122,7 @@ export class Ship {
   }
 
   boost() {
-    const force = Vector.fromAngle(this.heading).mult(SHIP_BOOST_FORCE);
+    const force = Vector.fromAngle(this.heading).setMag(SHIP_BOOST_FORCE);
     this.applyForce(force);
   }
 
@@ -139,5 +146,27 @@ export class Ship {
 
     const d = this.pos.dist(asteroid.pos);
     return d < this.r + asteroid.r;
+  }
+
+  addRotation(rotation: number) {
+    this.rotation += rotation;
+  }
+
+  shoot() {
+    const now = p.millis();
+    if (now - this.lastFireTime < this.minFireInterval) return;
+    this.lastFireTime = now;
+
+    // Knockback the ship
+    const knockbackForce = Vector.fromAngle(this.heading)
+      .mult(-1)
+      .setMag(SHIP_KNOCKBACK_FORCE);
+    this.applyForce(knockbackForce);
+
+    const bulletPos = Vector.fromAngle(this.heading).mult(this.r).add(this.pos);
+    const newBullet = new Bullet(bulletPos.x, bulletPos.y, this.heading);
+    newBullet.vel.add(this.vel);
+
+    return newBullet;
   }
 }

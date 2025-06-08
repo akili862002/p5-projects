@@ -7,21 +7,22 @@ import {
   BACKGROUND_COLOR,
   DEBUG,
   LIVES,
-  SHIP_KNOCKBACK_FORCE,
-  ASTEROID_GENERATE_INTERVAL,
+  ASTEROID_SPAWN_INTERVAL,
   ASTEROID_MAX_GENERATE,
-  ROCKET_GENERATE_INTERVAL,
+  ROCKET_SPAWN_INTERVAL,
   ROCKET_MAX_GENERATE,
   ASTEROID_INITIAL_COUNT,
   ASTEROID_SPLIT_COUNT,
+  SHIP_ROTATION_SPEED,
 } from "./config";
 import { SoundManager } from "./sound-manager";
 import { PointIndicator } from "./point-indicator";
 import { Rocket } from "./entities/rocket";
 import { ExplosionEffect } from "./entities/explosion-effect";
+import { ScoreManager } from "./score";
 
 export let p: P5;
-export let ship: Ship;
+export let ship: Ship | null;
 
 // Images
 export let shipImg: P5.Image;
@@ -37,7 +38,8 @@ export let isDebug = DEBUG;
 
 export let score = 0;
 export let lives = LIVES;
-export let gameOver = false;
+export let isGameOver = false;
+export let rebornCountdown = 0;
 
 let pointIndicators: PointIndicator;
 
@@ -49,8 +51,8 @@ export function sketch(p5: P5) {
   let asteroids: Asteroid[] = [];
   let bullets: Bullet[] = [];
   let rockets: Rocket[] = [];
-  let lastFireTime = 0;
   let explosionEffects: ExplosionEffect[] = [];
+  let stars: { pos: P5.Vector; size: number }[] = [];
 
   // let isDebug = true;
 
@@ -66,30 +68,43 @@ export function sketch(p5: P5) {
   };
 
   p.setup = () => {
+    // p5.js can't load fonts from Google Fonts CSS URL directly
+    // Instead, set the font family directly - the font should be available from the page's CSS
+    p.textFont("Orbitron");
     p.createCanvas(innerWidth, innerHeight);
     backgroundColor = p.color(BACKGROUND_COLOR);
     pointIndicators = new PointIndicator();
     soundManager = SoundManager.getInstance();
     resetGame();
+
+    // Create stars
+    for (let i = 0; i < 100; i++) {
+      const star = {
+        pos: p.createVector(p.random(0, p.width), p.random(0, p.height)),
+        size: p.random(0.1, 3),
+      };
+      stars.push(star);
+    }
   };
 
   p.draw = () => {
-    p.background(backgroundColor);
+    background();
 
-    if (gameOver) {
+    if (isGameOver) {
       displayGameOver();
       return;
     }
 
     updateAndDrawBullets();
     updateAndDrawAsteroids();
-    handleShipControls();
     updateAndDrawRockets();
-    updateAndDrawShip();
     displayHUD();
+    updateAndDrawShip();
 
     pointIndicators.update();
     pointIndicators.draw();
+
+    controls();
 
     for (let explosionEffect of explosionEffects) {
       explosionEffect.update();
@@ -99,24 +114,35 @@ export function sketch(p5: P5) {
       }
     }
 
-    // Create new asteroids periodically
-    // Create every 5s
     if (
-      p.frameCount % ASTEROID_GENERATE_INTERVAL === 0 &&
+      p.frameCount % ASTEROID_SPAWN_INTERVAL === 0 &&
       asteroids.length < ASTEROID_MAX_GENERATE
     ) {
       createAsteroid();
     }
 
     if (
-      p.frameCount % ROCKET_GENERATE_INTERVAL === 0 &&
+      p.frameCount % ROCKET_SPAWN_INTERVAL === 0 &&
       rockets.length < ROCKET_MAX_GENERATE
     ) {
       createRocket();
     }
   };
 
+  const background = () => {
+    p.background(backgroundColor);
+    // Draw stars
+    for (let i = 0; i < stars.length; i++) {
+      const star = stars[i];
+      const color = p.map(star.size, 0.1, 3, 140, 180);
+      p.fill(color);
+      p.circle(star.pos.x, star.pos.y, star.size);
+    }
+  };
+
   const updateAndDrawShip = () => {
+    if (!ship) return;
+
     ship.update();
     ship.draw();
     ship.edges();
@@ -144,7 +170,7 @@ export function sketch(p5: P5) {
       const rocket = rockets[i];
       rocket.update();
       rocket.draw();
-      rocket.tracking(ship.pos);
+      if (ship) rocket.tracking(ship.pos);
       rocket.edges();
 
       if (rocket.shouldRemove()) {
@@ -152,26 +178,13 @@ export function sketch(p5: P5) {
       }
 
       // Check if rocket collides with ship
-      if (rocket.intersects(ship) && !ship.invincible) {
+      if (ship && rocket.intersects(ship) && !ship.invincible) {
+        shipDestroyed(rocket.vel);
         rockets.splice(i, 1);
-        lives--;
-        soundManager.playAsteroidExplosionSound();
-
-        // Create explosion effect
-        const explosionPos = ship.pos.copy();
-        const explosionVel = rocket.vel.copy().add(ship.vel);
-        explosionEffects.push(
-          new ExplosionEffect(explosionPos, explosionVel, 100, 180)
-        );
-
-        if (lives <= 0) {
-          gameOver = true;
-        } else {
-          ship = new Ship(p.width / 2, p.height / 2);
-        }
         continue;
       }
 
+      // Check if rocket collides with asteroids
       for (let j = asteroids.length - 1; j >= 0; j--) {
         const asteroid = asteroids[j];
         if (rocket.intersects(asteroid)) {
@@ -181,7 +194,7 @@ export function sketch(p5: P5) {
           soundManager.playAsteroidExplosionSound();
 
           // Award points based on asteroid size
-          const points = Math.floor(150 / asteroid.r);
+          const points = Math.floor(150 / asteroid.r) * 200;
           score += points;
           pointIndicators.add(points, asteroid.pos.x, asteroid.pos.y);
 
@@ -201,10 +214,6 @@ export function sketch(p5: P5) {
 
           asteroids.splice(j, 1);
 
-          // Create new asteroid if too few remain
-          if (asteroids.length < 5) {
-            createAsteroid();
-          }
           break;
         }
       }
@@ -220,7 +229,7 @@ export function sketch(p5: P5) {
     pointIndicators.reset();
     score = 0;
     lives = 3;
-    gameOver = false;
+    isGameOver = false;
 
     // Create initial asteroids
     for (let i = 0; i < ASTEROID_INITIAL_COUNT; i++) {
@@ -233,9 +242,11 @@ export function sketch(p5: P5) {
     const newY = p.random(0, p.height);
 
     // Ensure rockets don't spawn too close to the ship
-    const shipDist = p.dist(newX, newY, ship.pos.x, ship.pos.y);
-    if (shipDist < 250) {
-      return createRocket();
+    if (ship) {
+      const shipDist = p.dist(newX, newY, ship.pos.x, ship.pos.y);
+      if (shipDist < 250) {
+        return createRocket();
+      }
     }
 
     const rocket = new Rocket(newX, newY);
@@ -248,9 +259,11 @@ export function sketch(p5: P5) {
     const newSize = size ?? p.random(30, 50);
 
     // Ensure asteroids don't spawn too close to the ship
-    const shipDist = p.dist(newX, newY, ship.pos.x, ship.pos.y);
-    if (shipDist < 200 && x === undefined) {
-      return createAsteroid();
+    if (ship) {
+      const shipDist = p.dist(newX, newY, ship.pos.x, ship.pos.y);
+      if (shipDist < 200 && x === undefined) {
+        return createAsteroid();
+      }
     }
 
     const newAsteroid = new Asteroid(newX, newY, newSize);
@@ -294,7 +307,9 @@ export function sketch(p5: P5) {
             const angleOffset = k === 0 ? p.PI / 4 : -p.PI / 4;
             const vel = newCombinedVel
               .copy()
-              .add(Vector.fromAngle(ship.heading + angleOffset).mult(1.3));
+              .add(
+                Vector.fromAngle(ship?.heading ?? 0 + angleOffset).mult(1.3)
+              );
 
             newAsteroid.vel = vel;
           }
@@ -302,16 +317,10 @@ export function sketch(p5: P5) {
 
         // Remove the asteroid and update score
         asteroids.splice(j, 1);
-        const points = Math.floor(100 / asteroid.r);
+        const points = Math.floor(100 / asteroid.r) * 100;
         score += points;
 
         pointIndicators.add(points, bullet.pos.x, bullet.pos.y);
-
-        // Create new asteroid if too few remain
-        if (asteroids.length < 5) {
-          createAsteroid();
-        }
-
         break;
       }
     }
@@ -336,58 +345,8 @@ export function sketch(p5: P5) {
     for (let j = asteroidIndex - 1; j >= 0; j--) {
       const other = asteroids[j];
       if (asteroid.intersectsAsteroid(other)) {
-        handleAsteroidCollision(asteroid, other);
+        asteroid.collision(other);
       }
-    }
-  };
-
-  const handleAsteroidCollision = (
-    asteroid1: Asteroid,
-    asteroid2: Asteroid
-  ) => {
-    // Collision response - elastic collision based on radius (mass)
-    const dx = asteroid2.pos.x - asteroid1.pos.x;
-    const dy = asteroid2.pos.y - asteroid1.pos.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-
-    // Calculate mass based on radius (area proportional to mass)
-    const m1 = asteroid1.r * asteroid1.r;
-    const m2 = asteroid2.r * asteroid2.r;
-
-    // Calculate normal vectors for collision
-    const normalX = dx / distance;
-    const normalY = dy / distance;
-
-    // Calculate relative velocity along normal
-    const relVelX = asteroid2.vel.x - asteroid1.vel.x;
-    const relVelY = asteroid2.vel.y - asteroid1.vel.y;
-    const relVelDotNormal = relVelX * normalX + relVelY * normalY;
-
-    // If asteroids are moving away from each other, skip collision response
-    if (relVelDotNormal > 0) return;
-
-    // Calculate impulse scalar
-    const impulseScalar = (2 * relVelDotNormal) / (1 / m1 + 1 / m2);
-
-    // Apply impulse to velocities
-    const impulseX = normalX * impulseScalar;
-    const impulseY = normalY * impulseScalar;
-
-    asteroid1.vel.x += impulseX / m1;
-    asteroid1.vel.y += impulseY / m1;
-    asteroid2.vel.x -= impulseX / m2;
-    asteroid2.vel.y -= impulseY / m2;
-
-    // Push asteroids apart slightly to prevent sticking
-    const overlap = asteroid1.r + asteroid2.r - distance;
-    if (overlap > 0) {
-      const pushRatio1 = m2 / (m1 + m2);
-      const pushRatio2 = m1 / (m1 + m2);
-
-      asteroid1.pos.x -= normalX * overlap * pushRatio1;
-      asteroid1.pos.y -= normalY * overlap * pushRatio1;
-      asteroid2.pos.x += normalX * overlap * pushRatio2;
-      asteroid2.pos.y += normalY * overlap * pushRatio2;
     }
   };
 
@@ -395,82 +354,70 @@ export function sketch(p5: P5) {
     asteroid: Asteroid,
     asteroidIndex: number
   ) => {
+    if (!ship) return;
     if (ship.intersects(asteroid)) {
-      lives--;
-
-      // Create explosion effect
-      const explosionPos = ship.pos.copy();
-      const explosionVel = ship.vel.copy().add(asteroid.vel);
-      explosionEffects.push(
-        new ExplosionEffect(explosionPos, explosionVel, 100, 180)
-      );
-
-      // Play explosion sound
-      soundManager.playAsteroidExplosionSound();
-
-      if (lives <= 0) {
-        gameOver = true;
-      } else {
-        ship = new Ship(p.width / 2, p.height / 2);
-      }
+      shipDestroyed(asteroid.vel);
       asteroids.splice(asteroidIndex, 1);
-      if (asteroids.length < 5) {
-        createAsteroid();
-      }
     }
   };
 
-  const handleShipControls = () => {
+  const shipDestroyed = (force?: Vector) => {
+    if (!ship) throw new Error("Ship is not defined");
+
+    lives--;
+
+    // Create explosion effect
+    const explosionPos = ship.pos.copy();
+    const explosionVel = ship.vel.copy().add(force ?? new Vector(0, 0));
+    explosionEffects.push(
+      new ExplosionEffect(explosionPos, explosionVel, 100, 180)
+    );
+
+    // Play explosion sound
+    soundManager.playAsteroidExplosionSound();
+
+    if (lives <= 0) {
+      gameOver();
+    } else {
+      ship = new Ship(p.width / 2, p.height / 2);
+    }
+  };
+
+  const controls = () => {
+    if (!ship) return;
+
     if (p.keyIsDown(p.LEFT_ARROW) || p.keyIsDown(65)) {
-      ship.rotation -= 0.037;
+      ship.addRotation(-SHIP_ROTATION_SPEED);
     }
     if (p.keyIsDown(p.RIGHT_ARROW) || p.keyIsDown(68)) {
-      ship.rotation += 0.037;
+      ship.addRotation(SHIP_ROTATION_SPEED);
     }
     if (p.keyIsDown(32)) {
-      const now = p.millis();
-      if (now - lastFireTime > 150) {
-        const bullet = fire();
-        if (bullet) {
-          soundManager.playFireSound();
-          lastFireTime = now;
-        }
+      const bullet = ship.shoot();
+      if (bullet) {
+        soundManager.playFireSound();
+        bullets.push(bullet);
       }
     }
+
+    const isHoldingUp = p.keyIsDown(p.UP_ARROW) || p.keyIsDown(87);
+    if (isHoldingUp) {
+      ship.isBoosting = true;
+    } else {
+      ship.isBoosting = false;
+    }
+  };
+
+  const gameOver = () => {
+    isGameOver = true;
+
+    // Save the score
+    ScoreManager.saveScore(score);
   };
 
   p.keyPressed = (e: any) => {
-    if (e.key === "ArrowUp" || e.key.toLowerCase() === "w") {
-      ship.isBoosting = true;
-    }
-    if (e.key === "Enter" && gameOver) {
+    if (isGameOver) {
       resetGame();
-    }
-  };
-
-  const fire = () => {
-    if (bullets.length >= 10) {
-      return;
-    }
-
-    const bulletPos = Vector.fromAngle(ship.heading).mult(ship.r).add(ship.pos);
-    const newBullet = new Bullet(bulletPos.x, bulletPos.y, ship.heading);
-    newBullet.vel.add(ship.vel);
-
-    bullets.push(newBullet);
-
-    // make the ship block back
-    const knockbackForce = Vector.fromAngle(ship.heading).mult(
-      -SHIP_KNOCKBACK_FORCE
-    );
-    ship.applyForce(knockbackForce);
-
-    return newBullet;
-  };
-
-  p.keyReleased = (e: any) => {
-    if (e.key === "ArrowUp" || e.key.toLowerCase() === "w") {
-      ship.isBoosting = false;
     }
   };
 }
