@@ -96,10 +96,10 @@ export function sketch(p5: P5) {
     }
 
     updateAndDrawBullets();
+    updateAndDrawShip();
     updateAndDrawAsteroids();
     updateAndDrawRockets();
     displayHUD();
-    updateAndDrawShip();
 
     pointIndicators.update();
     pointIndicators.draw();
@@ -297,18 +297,21 @@ export function sketch(p5: P5) {
           newCombinedVel.setMag(newCombinedVel.mag() * 1.5);
 
           for (let k = 0; k < 2; k++) {
+            // Add slight offset to starting positions to prevent sticking together
+            const posOffset = Vector.random2D().mult(newSize * 0.5);
             const newAsteroid = createAsteroid(
-              asteroid.pos.x,
-              asteroid.pos.y,
+              asteroid.pos.x + posOffset.x,
+              asteroid.pos.y + posOffset.y,
               newSize
             );
 
             // Create different angles for the two asteroid pieces
-            const angleOffset = k === 0 ? p.PI / 4 : -p.PI / 4;
+            const angleOffset = k === 0 ? p.PI / 2 : -p.PI / 2;
+            // Apply angle correctly using proper parentheses
             const vel = newCombinedVel
               .copy()
               .add(
-                Vector.fromAngle(ship?.heading ?? 0 + angleOffset).mult(1.3)
+                Vector.fromAngle((ship?.heading ?? 0) + angleOffset).mult(1.3)
               );
 
             newAsteroid.vel = vel;
