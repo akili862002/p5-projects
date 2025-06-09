@@ -154,21 +154,16 @@ export class Ship {
 
     for (let i = 0; i < flameCount; i++) {
       // Add randomness to position
-      const offsetAngle = p.random(-0.5, 0.5) + this.heading + p.PI;
+      const offsetAngle = p.random(-1, 1) + this.heading + p.PI;
       const offsetMagnitude = p.random(0, this.r * 0.4);
       const flamePos = shipBackPos
         .copy()
         .add(Vector.fromAngle(offsetAngle).mult(offsetMagnitude));
 
-      const flameVel = Vector.fromAngle(this.heading + p.PI)
-        .mult(p.random(1, 3))
-        .add(this.vel.copy().mult(0.8));
-
       let color = p.color(116, 239, 248);
 
       const flame = new Flame({
         pos: flamePos,
-        vel: flameVel,
         heading: this.heading + p.random(-0.3, 0.3),
         color: color,
       });

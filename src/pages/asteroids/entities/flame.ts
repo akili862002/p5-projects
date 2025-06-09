@@ -3,26 +3,28 @@ import { p } from "../sketch";
 
 export class Flame {
   pos: P5.Vector;
-  vel: P5.Vector;
   size = 5;
   heading: number;
   color: P5.Color;
+  sizeDecrease = 0.2;
 
   constructor(args: {
     pos: P5.Vector;
     heading: number;
-    vel: P5.Vector;
     color: P5.Color;
+    sizeDecrease?: number;
+    size?: number;
   }) {
     this.pos = args.pos.copy();
-    this.vel = args.vel.copy();
     this.heading = args.heading;
     this.color = args.color;
+    this.sizeDecrease = args.sizeDecrease || 0.2;
+    this.size = args.size || 5;
   }
 
   update() {
     // this.pos.add(this.vel);
-    this.size -= 0.2;
+    this.size -= this.sizeDecrease;
   }
 
   draw() {

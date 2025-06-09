@@ -7,19 +7,26 @@ export class ExplosionEffect {
   size: number;
   duration: number;
   sparks: Spark[] = [];
+  color: P5.Color;
 
-  constructor(pos: P5.Vector, vel: P5.Vector, size: number, duration = 2 * 60) {
-    this.pos = pos;
-    this.vel = vel;
-    this.size = size;
-    this.duration = duration;
-
+  constructor(args: {
+    pos: P5.Vector;
+    vel: P5.Vector;
+    size: number;
+    duration: number;
+    color: P5.Color;
+  }) {
+    this.pos = args.pos;
+    this.vel = args.vel;
+    this.size = args.size;
+    this.duration = args.duration;
+    this.color = args.color;
     // Get the angle of the explosion velocity
     const explosionAngle = this.vel.heading();
 
     // Create more sparks for a bigger explosion effect
 
-    for (let i = 0; i < size; i++) {
+    for (let i = 0; i < this.size; i++) {
       // Create sparks that mostly flow in the direction of the explosion
       // with some random spread
       const angleSpread = p.random(-Math.PI / 6, Math.PI / 6);
@@ -37,9 +44,9 @@ export class ExplosionEffect {
 
       //   sparkVel.limit(3);
       const sparkMagnitude = sparkVel.mag();
-      const sparkSize = p.map(sparkMagnitude, 0, vel.mag(), 10, 6);
+      const sparkSize = p.map(sparkMagnitude, 0, this.vel.mag(), 10, 6);
 
-      const spark = new Spark(this.pos.copy(), sparkVel, sparkSize);
+      const spark = new Spark(this.pos.copy(), sparkVel, sparkSize, this.color);
 
       this.sparks.push(spark);
     }
@@ -69,11 +76,13 @@ export class Spark {
   vel: P5.Vector;
   size: number;
   rotation: number;
-  constructor(pos: P5.Vector, vel: P5.Vector, size: number) {
+  color: P5.Color;
+  constructor(pos: P5.Vector, vel: P5.Vector, size: number, color: P5.Color) {
     this.pos = pos;
     this.vel = vel;
     this.size = size;
     this.rotation = p.random(0, Math.PI * 2);
+    this.color = color;
   }
 
   update() {
@@ -94,7 +103,8 @@ export class Spark {
     p.push();
     p.translate(this.pos.x, this.pos.y);
     p.imageMode(p.CENTER);
-    p.fill(116, 240, 243);
+    // p.fill(116, 240, 243);
+    p.fill(this.color);
     p.rotate(this.rotation);
     p.rect(0, 0, this.size, this.size);
     p.pop();

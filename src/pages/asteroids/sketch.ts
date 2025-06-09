@@ -85,6 +85,8 @@ export function sketch(p5: P5) {
       };
       stars.push(star);
     }
+
+    p.frameRate(60);
   };
 
   p.draw = () => {
@@ -194,7 +196,7 @@ export function sketch(p5: P5) {
           soundManager.playAsteroidExplosionSound();
 
           // Award points based on asteroid size
-          const points = Math.floor(150 / asteroid.r) * 200;
+          const points = Math.floor(100 / asteroid.r) * 15;
           score += points;
           pointIndicators.add(points, asteroid.pos.x, asteroid.pos.y);
 
@@ -317,10 +319,20 @@ export function sketch(p5: P5) {
             newAsteroid.vel = vel;
           }
         }
+        // Create explosion effect
+        explosionEffects.push(
+          new ExplosionEffect({
+            pos: bullet.pos.copy(),
+            vel: bullet.vel.copy().setMag(3),
+            size: 100,
+            duration: 180,
+            color: p.color(243, 197, 123),
+          })
+        );
 
         // Remove the asteroid and update score
         asteroids.splice(j, 1);
-        const points = Math.floor(100 / asteroid.r) * 100;
+        const points = Math.floor(100 / asteroid.r) * 10;
         score += points;
 
         pointIndicators.add(points, bullet.pos.x, bullet.pos.y);
@@ -373,7 +385,13 @@ export function sketch(p5: P5) {
     const explosionPos = ship.pos.copy();
     const explosionVel = ship.vel.copy().add(force ?? new Vector(0, 0));
     explosionEffects.push(
-      new ExplosionEffect(explosionPos, explosionVel, 100, 180)
+      new ExplosionEffect({
+        pos: explosionPos,
+        vel: explosionVel,
+        size: 100,
+        duration: 180,
+        color: p.color(116, 240, 243),
+      })
     );
 
     // Play explosion sound
