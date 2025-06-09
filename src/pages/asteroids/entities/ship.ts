@@ -10,6 +10,7 @@ import {
   SHIP_KNOCKBACK_FORCE,
 } from "../config";
 import { Bullet } from "./bullet";
+import { Flame } from "./flame";
 
 export class Ship {
   pos: P5.Vector;
@@ -28,6 +29,7 @@ export class Ship {
   isBoosting = false;
   lastFireTime = 0;
   minFireInterval = 150;
+  flames: Flame[] = [];
 
   constructor(x: number, y: number) {
     this.pos = p.createVector(x, y);
@@ -60,6 +62,14 @@ export class Ship {
         this.invincible = false;
       }
     }
+
+    // Update flames
+    for (let flame of this.flames) {
+      flame.update();
+      if (flame.shouldRemove()) {
+        this.flames = this.flames.filter((f) => f !== flame);
+      }
+    }
   }
 
   applyForce(force: P5.Vector) {
@@ -90,14 +100,21 @@ export class Ship {
 
     // Draw thruster when boosting
     if (this.isBoosting) {
-      p.push();
-      p.translate(0, this.r * 1.8);
-      const scale = 1.3;
-      p.image(firerImg, 0, 0, this.r * scale, this.r * scale);
-      p.pop();
+      // p.push();
+      // p.translate(0, this.r * 1.8);
+      // const scale = 1.3;
+      // p.image(firerImg, 0, 0, this.r * scale, this.r * scale);
+      // p.pop();
+      // Create flames
     }
 
+    // Draw flames
+
     p.pop();
+
+    for (let flame of this.flames) {
+      flame.draw();
+    }
 
     if (isDebug) {
       p.push();
@@ -124,6 +141,43 @@ export class Ship {
   boost() {
     const force = Vector.fromAngle(this.heading).setMag(SHIP_BOOST_FORCE);
     this.applyForce(force);
+    this.createFlames();
+  }
+  createFlames() {
+    // Create realistic flame particles with randomized properties
+    const flameCount = 8;
+
+    // Get position behind the ship
+    const shipBackPos = this.pos
+      .copy()
+      .add(Vector.fromAngle(this.heading + p.PI).mult(this.r * 0.9));
+
+    for (let i = 0; i < flameCount; i++) {
+      // Add randomness to position
+      const offsetAngle = p.random(-0.5, 0.5) + this.heading + p.PI;
+      const offsetMagnitude = p.random(0, this.r * 0.4);
+      const flamePos = shipBackPos
+        .copy()
+        .add(Vector.fromAngle(offsetAngle).mult(offsetMagnitude));
+
+      const flameVel = Vector.fromAngle(this.heading + p.PI)
+        .mult(p.random(1, 3))
+        .add(this.vel.copy().mult(0.8));
+
+      let color = p.color(116, 239, 248);
+
+      const flame = new Flame({
+        pos: flamePos,
+        vel: flameVel,
+        heading: this.heading + p.random(-0.3, 0.3),
+        color: color,
+      });
+
+      // Randomize flame size
+      flame.size = p.random(1, 5);
+
+      this.flames.push(flame);
+    }
   }
 
   edges() {

@@ -20,7 +20,7 @@ export default function AsteroidsPage() {
   }, []);
 
   return (
-    <div className={"relative h-screen w-screen"}>
+    <div className={"relative h-screen w-screen bg-[#020307]"}>
       <Guide />
       <div id="canvas-container" ref={canvasRef} />
     </div>

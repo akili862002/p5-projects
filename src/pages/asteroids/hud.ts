@@ -1,3 +1,4 @@
+import { BULLET_COLOR } from "./config";
 import { ScoreManager } from "./score";
 import { heartImage, lives, p, score, ship } from "./sketch";
 import P5 from "p5";
@@ -22,6 +23,7 @@ export const displayHUD = () => {
   displayScore();
   displayLives();
   displaySpeed();
+  drawFPS();
 };
 
 const updateScoreAnimation = () => {
@@ -85,7 +87,7 @@ const displaySpeed = () => {
 
   // Draw the filled portion with color gradient from green to red
   if (fillWidth > 0) {
-    p.fill(253, 190, 111);
+    p.fill(255);
     p.rect(barX, barY, fillWidth, barHeight);
   }
 
@@ -137,4 +139,11 @@ export const displayGameOver = () => {
   p.fill(255, flashRate);
   p.textSize(24);
   p.text("Press any key to play again", p.width / 2, p.height / 2 + 300);
+};
+
+const drawFPS = () => {
+  p.fill(255);
+  p.textSize(14);
+  p.textAlign(p.LEFT);
+  p.text(`FPS: ${p.frameRate().toFixed(0)}`, 20, p.height - 14);
 };
