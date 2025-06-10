@@ -71,10 +71,6 @@ export class GameOverDisplay implements HUDComponent {
     const flashRate = p.sin(p.frameCount * 0.2) * 127 + 128;
     p.fill(255, flashRate);
     p.textSize(24);
-    p.text(
-      "Press [Space] or [Enter] to play again",
-      this.centerX,
-      this.centerY + 300
-    );
+    p.text("Press [Enter] to play again", this.centerX, this.centerY + 300);
   }
 }

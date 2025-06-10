@@ -40,7 +40,7 @@ export class Game {
   private rockets: Rocket[] = [];
   private explosionEffects: ExplosionEffect[] = [];
   private lastSpawnedRocketTime = 0;
-  private level = 0;
+  private level = 1;
 
   constructor(p5: P5) {
     this.p = p5;
@@ -318,25 +318,23 @@ export class Game {
 
   private updateLevels() {
     const level = this.getLevel();
-    if (level !== this.level) {
+    if (level > this.level) {
       this.handleLevelUp(level);
     }
     this.level = level;
   }
 
-  private handleLevelUp(level: number) {
-    if (level === 1) {
+  private handleLevelUp(lv: number) {
+    if (lv === 1) {
       this.hud.toast.add("Welcome to Asteroids, Captain!", 3 * 60);
-    }
-
-    if (level > 1) {
+    } else {
       this.hud.toast.add(`Level Up!`, 100);
     }
 
-    if (level === 2) {
+    if (lv === 2) {
       this.ship?.switchGunMode("double");
       setTimeout(() => {
-        this.hud.toast.add(`You got Double Gun!`, 5 * 60);
+        this.hud.toast.add(`You got Double Gun!`, 3 * 60);
 
         setTimeout(() => {
           this.hud.toast.add(`Rockets will now appear!`, 5 * 60);
@@ -507,6 +505,8 @@ export class Game {
     this.score = 0;
     this.lives = LIVES;
     this.isGameOver = false;
+    this.level = 1;
+    this.ship.switchGunMode("single");
 
     // Create initial asteroids
     for (let i = 0; i < ASTEROID_INITIAL_COUNT; i++) {
@@ -522,7 +522,7 @@ export class Game {
 
   onKeyPressed(e: KeyboardEvent) {
     if (this.isGameOver) {
-      if (e.key === " " || e.key === "Enter") {
+      if (e.key === "Enter") {
         this.resetGame();
         return;
       }
