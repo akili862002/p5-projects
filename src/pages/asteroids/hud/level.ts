@@ -12,12 +12,8 @@ export class LevelDisplay implements HUDComponent {
   public update(): void {
     this.targetProgress = (game.score % POINTS_PER_LEVEL) / POINTS_PER_LEVEL;
 
-    if (this.currentProgress < this.targetProgress) {
-      this.currentProgress +=
-        (this.targetProgress - this.currentProgress) * this.easeSpeed;
-    } else {
-      this.currentProgress = this.targetProgress;
-    }
+    this.currentProgress +=
+      (this.targetProgress - this.currentProgress) * this.easeSpeed;
   }
 
   public render(): void {
