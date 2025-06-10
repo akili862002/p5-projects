@@ -4,6 +4,7 @@ import { GameOverDisplay } from "./game-over";
 import { LivesDisplay } from "./lives";
 import { LevelDisplay } from "./level";
 import { SpeedDisplay } from "./speed";
+import { Toast } from "./toast";
 
 export class HUD {
   private scoreDisplay: ScoreDisplay;
@@ -13,6 +14,7 @@ export class HUD {
   private gameOverDisplay: GameOverDisplay;
   private pausedDisplay: PausedDisplay;
   private levelDisplay: LevelDisplay;
+  public toast: Toast;
 
   constructor() {
     this.initializeComponents();
@@ -26,6 +28,7 @@ export class HUD {
     this.gameOverDisplay = new GameOverDisplay();
     this.pausedDisplay = new PausedDisplay();
     this.levelDisplay = new LevelDisplay();
+    this.toast = new Toast(p);
   }
 
   public update(): void {
@@ -34,6 +37,7 @@ export class HUD {
     this.speedDisplay.update();
     this.fpsDisplay.update();
     this.levelDisplay.update();
+    this.toast.update();
   }
 
   public render(): void {
@@ -42,6 +46,7 @@ export class HUD {
     this.speedDisplay.render();
     this.fpsDisplay.render();
     this.levelDisplay.render();
+    this.toast.draw();
 
     if (game.paused && !game.isGameOver) {
       this.pausedDisplay.render();

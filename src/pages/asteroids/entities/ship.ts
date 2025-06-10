@@ -12,6 +12,9 @@ import {
 import { Bullet } from "./bullet";
 import { Flame } from "./flame";
 
+type GunMode = "single" | "double";
+let gunMode: GunMode = "single";
+
 export class Ship {
   pos: P5.Vector;
   vel: P5.Vector;
@@ -214,10 +217,44 @@ export class Ship {
       .setMag(SHIP_KNOCKBACK_FORCE);
     this.applyForce(knockbackForce);
 
-    const bulletPos = Vector.fromAngle(this.heading).mult(this.r).add(this.pos);
-    const newBullet = new Bullet(bulletPos.x, bulletPos.y, this.heading);
-    newBullet.vel.add(this.vel);
+    if (gunMode === "single") {
+      const bulletPos = Vector.fromAngle(this.heading)
+        .mult(this.r)
+        .add(this.pos);
+      const newBullet = new Bullet(bulletPos.x, bulletPos.y, this.heading);
+      newBullet.vel.add(this.vel);
 
-    return newBullet;
+      return [newBullet];
+    }
+    if (gunMode === "double") {
+      const bulletPos = Vector.fromAngle(this.heading)
+        .mult(this.r)
+        .add(this.pos);
+
+      // Create perpendicular vector for correct offset
+      const perpVector = Vector.fromAngle(this.heading + Math.PI / 2).mult(5);
+
+      // First bullet - offset to the left
+      const newBullet = new Bullet(
+        bulletPos.x - perpVector.x,
+        bulletPos.y - perpVector.y,
+        this.heading
+      );
+      newBullet.vel.add(this.vel);
+
+      // Second bullet - offset to the right
+      const newBullet2 = new Bullet(
+        bulletPos.x + perpVector.x,
+        bulletPos.y + perpVector.y,
+        this.heading
+      );
+      newBullet2.vel.add(this.vel);
+
+      return [newBullet, newBullet2];
+    }
+  }
+
+  switchGunMode(mode: GunMode) {
+    gunMode = mode;
   }
 }

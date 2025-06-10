@@ -40,6 +40,7 @@ export class Game {
   private rockets: Rocket[] = [];
   private explosionEffects: ExplosionEffect[] = [];
   private lastSpawnedRocketTime = 0;
+  private level = 0;
 
   constructor(p5: P5) {
     this.p = p5;
@@ -61,16 +62,17 @@ export class Game {
     this.updateRockets();
     this.updateExplosionEffects();
     this.pointIndicators.update();
+    this.updateLevels();
 
     this.spawnRocket();
     this.spawnAsteroid();
   }
 
   draw() {
-    this.drawShip();
     this.drawBullets();
     this.drawAsteroids();
     this.drawRockets();
+    this.drawShip();
     this.drawExplosionEffects();
     this.pointIndicators.draw();
 
@@ -314,6 +316,35 @@ export class Game {
     }
   }
 
+  private updateLevels() {
+    const level = this.getLevel();
+    if (level !== this.level) {
+      this.handleLevelUp(level);
+    }
+    this.level = level;
+  }
+
+  private handleLevelUp(level: number) {
+    if (level === 1) {
+      this.hud.toast.add("Welcome to Asteroids, Captain!", 3 * 60);
+    }
+
+    if (level > 1) {
+      this.hud.toast.add(`Level Up!`, 100);
+    }
+
+    if (level === 2) {
+      this.ship?.switchGunMode("double");
+      setTimeout(() => {
+        this.hud.toast.add(`You got Double Gun!`, 5 * 60);
+
+        setTimeout(() => {
+          this.hud.toast.add(`Rockets will now appear!`, 5 * 60);
+        }, 500);
+      }, 2000);
+    }
+  }
+
   // Ship destruction
   private destroyShip(force?: Vector) {
     if (!this.ship) throw new Error("Ship is not defined");
@@ -339,10 +370,30 @@ export class Game {
     if (this.lives <= 0) {
       this.gameOver();
     } else {
+      // Reset ship
       this.ship = null;
       setTimeout(() => {
         this.ship = new Ship(this.p.width / 2, this.p.height / 2);
       }, SHIP_SPAWN_DELAY_MS);
+
+      // Show toast
+      const provocations = [
+        "That's all you got?",
+        "Oops! Try again!",
+        "Watch out for those asteroids!",
+        "Not your best moment...",
+        "Don't give up now!",
+        "Need better reflexes?",
+        "Close, but not close enough!",
+        "Pilot error detected!",
+        "Asteroids: 1, You: 0",
+        "Space is dangerous!",
+        "Shields? What shields?",
+        "Navigate better next time!",
+      ];
+      const message =
+        provocations[Math.floor(Math.random() * provocations.length)];
+      this.hud.toast.add(message, 3 * 60);
     }
   }
 
@@ -433,10 +484,10 @@ export class Game {
       this.ship.addRotation(SHIP_ROTATION_SPEED);
     }
     if (this.p.keyIsDown(32)) {
-      const bullet = this.ship.shoot();
-      if (bullet) {
+      const bullets = this.ship.shoot();
+      if (bullets) {
         this.soundManager.playFireSound();
-        this.bullets.push(bullet);
+        this.bullets.push(...bullets);
       }
     }
 
