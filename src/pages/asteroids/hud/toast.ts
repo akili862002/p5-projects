@@ -9,8 +9,11 @@ export class Toast {
     this.items.push(new ToastItem(message, duration));
   }
 
+  clean() {
+    this.items = [];
+  }
+
   update() {
-    const currentTime = this.p.millis();
     for (const item of this.items) {
       item.update();
       if (item.shouldRemove()) {
@@ -20,8 +23,6 @@ export class Toast {
   }
 
   draw() {
-    const currentTime = this.p.millis();
-
     this.p.push();
     this.p.textAlign(this.p.CENTER, this.p.BOTTOM);
     this.p.fill(255);

@@ -507,6 +507,7 @@ export class Game {
     this.isGameOver = false;
     this.level = 0;
     this.ship.switchGunMode("single");
+    this.hud.toast.clean();
 
     // Create initial asteroids
     for (let i = 0; i < ASTEROID_INITIAL_COUNT; i++) {
