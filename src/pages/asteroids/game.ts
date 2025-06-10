@@ -334,10 +334,10 @@ export class Game {
     if (lv === 2) {
       this.ship?.switchGunMode("double");
       setTimeout(() => {
-        this.hud.toast.add(`You got Double Gun!`, 3 * 60);
+        this.hud.toast.add(`Level Up!. You got Double Gun!`, 3 * 60);
 
         setTimeout(() => {
-          this.hud.toast.add(`Rockets will now appear!`, 5 * 60);
+          this.hud.toast.add(`Watchout! Rockets are coming!`, 5 * 60);
         }, 500);
       }, 2000);
     }
