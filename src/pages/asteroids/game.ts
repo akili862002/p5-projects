@@ -40,7 +40,7 @@ export class Game {
   private rockets: Rocket[] = [];
   private explosionEffects: ExplosionEffect[] = [];
   private lastSpawnedRocketTime = 0;
-  private level = 1;
+  private level = 0;
 
   constructor(p5: P5) {
     this.p = p5;
@@ -505,7 +505,7 @@ export class Game {
     this.score = 0;
     this.lives = LIVES;
     this.isGameOver = false;
-    this.level = 1;
+    this.level = 0;
     this.ship.switchGunMode("single");
 
     // Create initial asteroids
