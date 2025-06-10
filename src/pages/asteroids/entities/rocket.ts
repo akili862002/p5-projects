@@ -5,7 +5,7 @@ import {
   ROCKET_MAX_SPEED,
   ROCKET_STEER_FORCE,
 } from "../config";
-import { rocketImg, firerImg } from "../sketch";
+import { rocketImg } from "../sketch";
 import { Flame } from "./flame";
 
 export class Rocket {

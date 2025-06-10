@@ -1,5 +1,5 @@
 import P5, { Vector } from "p5";
-import { firerImg, isDebug, p, shipImg } from "../sketch";
+import { isDebug, p, shipImg } from "../sketch";
 import { Asteroid } from "./asteroid";
 import {
   SHIP_MAX_SPEED,
