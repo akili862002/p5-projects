@@ -35,7 +35,7 @@ export const POINT_INDICATOR_COLOR = "#74EFF8";
 // Rocket
 export const ROCKET_COLOR = "#74EFF8";
 export const ROCKET_MAX_SPEED = 7;
-export const ROCKET_SPAWN_INTERVAL = 600; // 10 seconds
+export const ROCKET_SPAWN_INTERVAL = 12 * 60; // seconds
 export const ROCKET_MAX_GENERATE = 5;
 export const ROCKET_LIFESPAN = 850;
 export const ROCKET_STEER_FORCE = 0.08;

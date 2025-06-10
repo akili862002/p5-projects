@@ -1,10 +1,6 @@
 import { p, isDebug } from "../sketch";
 import P5, { Vector } from "p5";
-import {
-  ASTEROID_COLOR,
-  ASTEROID_MAX_SPEED,
-  BACKGROUND_COLOR,
-} from "../config";
+import { ASTEROID_COLOR, ASTEROID_MAX_SPEED } from "../config";
 import { hexToRgb } from "../utils";
 
 export class Asteroid {

@@ -50,22 +50,13 @@ export class Rocket {
     p.rotate(angle);
 
     if (!this.allowLaunch) {
-      // Draw a red circle to warning the player
-      // Create a pulsating effect for the warning circle
       const pulseAmount = p.sin(p.frameCount * 0.1) * 20 + 50; // Values between 30-70
       p.fill(255, 69, 90, pulseAmount);
       p.circle(0, 0, 40);
     }
 
-    // Use the rocket image instead of drawing shapes
     p.imageMode(p.CENTER);
     p.image(rocketImg, 0, 0, 30, 30);
-
-    // const vel = this.vel.mag();
-    // if (this.allowLaunch && vel > 1) {
-    //   p.translate(0, 20);
-    //   p.image(firerImg, 0, 0, 15, 15);
-    // }
 
     p.pop();
 
@@ -109,6 +100,8 @@ export class Rocket {
         pos: flamePos,
         heading: this.vel.heading() + p.random(-1, 1),
         color: p.color(color),
+        sizeDecrease: p.random(0.05, 0.1),
+        size: 7,
       });
 
       // Randomize flame size

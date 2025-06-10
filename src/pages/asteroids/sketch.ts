@@ -11,6 +11,7 @@ export let bulletImg: P5.Image;
 export let firerImg: P5.Image;
 export let heartImage: P5.Image;
 export let rocketImg: P5.Image;
+export let stars: { pos: P5.Vector; size: number }[] = [];
 
 // Colors
 export let backgroundColor: P5.Color;
@@ -19,7 +20,6 @@ export let isDebug = DEBUG;
 
 export function sketch(p5: P5) {
   p = p5;
-  let stars: { pos: P5.Vector; size: number }[] = [];
 
   p.preload = () => {
     shipImg = p.loadImage("/game/ship.png");
@@ -61,7 +61,7 @@ export function sketch(p5: P5) {
   };
 
   const createBackgroundStars = () => {
-    const starCount = p.map(p.width, 600, 1400, 40, 120);
+    const starCount = p.map(p.width, 600, 1400, 40, 100);
 
     for (let i = 0; i < starCount; i++) {
       const star = {

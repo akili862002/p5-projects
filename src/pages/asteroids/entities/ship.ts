@@ -143,6 +143,7 @@ export class Ship {
     this.applyForce(force);
     this.createFlames();
   }
+
   createFlames() {
     // Create realistic flame particles with randomized properties
     const flameCount = 8;
@@ -166,6 +167,7 @@ export class Ship {
         pos: flamePos,
         heading: this.heading + p.random(-0.3, 0.3),
         color: color,
+        sizeDecrease: p.random(0.05, 0.2),
       });
 
       // Randomize flame size

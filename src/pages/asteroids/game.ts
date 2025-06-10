@@ -38,6 +38,7 @@ export class Game {
   private bullets: Bullet[] = [];
   private rockets: Rocket[] = [];
   private explosionEffects: ExplosionEffect[] = [];
+  private lastSpawnedRocketTime = 0;
 
   constructor(p5: P5) {
     this.p = p5;
@@ -60,7 +61,8 @@ export class Game {
     this.updateExplosionEffects();
     this.pointIndicators.update();
 
-    this.handleSpawning();
+    this.spawnRocket();
+    this.spawnAsteroid();
   }
 
   draw() {
@@ -344,20 +346,34 @@ export class Game {
   }
 
   // Spawning logic
-  private handleSpawning() {
+  private spawnRocket() {
+    // Calculate adjusted spawn interval based on level
+    const adjustedRocketSpawnInterval =
+      ROCKET_SPAWN_INTERVAL - this.getLevel() * 60;
+
+    // Check if enough time has passed since last rocket spawn
+    const isSpawnTimeElapsed =
+      this.p.frameCount - this.lastSpawnedRocketTime >
+      adjustedRocketSpawnInterval;
+
+    // Check all conditions for spawning a new rocket
+    if (
+      this.ship &&
+      this.getLevel() > 1 &&
+      isSpawnTimeElapsed &&
+      this.rockets.length < ROCKET_MAX_GENERATE
+    ) {
+      this.createRocket();
+      this.lastSpawnedRocketTime = this.p.frameCount;
+    }
+  }
+
+  private spawnAsteroid() {
     if (
       this.p.frameCount % ASTEROID_SPAWN_INTERVAL === 0 &&
       this.asteroids.length < ASTEROID_MAX_GENERATE
     ) {
       this.createAsteroid();
-    }
-
-    if (
-      this.p.frameCount % ROCKET_SPAWN_INTERVAL === 0 &&
-      this.rockets.length < ROCKET_MAX_GENERATE &&
-      !!this.ship
-    ) {
-      this.createRocket();
     }
   }
 
@@ -460,7 +476,7 @@ export class Game {
       }
     }
 
-    if (this.paused && e.key === " ") {
+    if (this.paused && (e.key === " " || e.key === "Enter")) {
       this.paused = false;
       return;
     }
@@ -469,6 +485,11 @@ export class Game {
       this.paused = !this.paused;
       return;
     }
+  }
+
+  getLevel() {
+    // return 7;
+    return Math.floor(this.score / 1000) + 1;
   }
 
   // Getters for read-only access

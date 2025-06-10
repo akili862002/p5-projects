@@ -1,7 +1,9 @@
-import { p, game } from "../sketch";
+import { p, game, stars } from "../sketch";
 import { PausedDisplay } from "./pause";
 import { GameOverDisplay } from "./game-over";
 import { LivesDisplay } from "./lives";
+import { LevelDisplay } from "./level";
+import { SpeedDisplay } from "./speed";
 
 export class HUD {
   private scoreDisplay: ScoreDisplay;
@@ -10,6 +12,7 @@ export class HUD {
   private fpsDisplay: FPSDisplay;
   private gameOverDisplay: GameOverDisplay;
   private pausedDisplay: PausedDisplay;
+  private levelDisplay: LevelDisplay;
 
   constructor() {
     this.initializeComponents();
@@ -22,6 +25,7 @@ export class HUD {
     this.fpsDisplay = new FPSDisplay();
     this.gameOverDisplay = new GameOverDisplay();
     this.pausedDisplay = new PausedDisplay();
+    this.levelDisplay = new LevelDisplay();
   }
 
   public update(): void {
@@ -29,6 +33,7 @@ export class HUD {
     this.livesDisplay.update();
     this.speedDisplay.update();
     this.fpsDisplay.update();
+    this.levelDisplay.update();
   }
 
   public render(): void {
@@ -36,6 +41,7 @@ export class HUD {
     this.livesDisplay.render();
     this.speedDisplay.render();
     this.fpsDisplay.render();
+    this.levelDisplay.render();
 
     if (game.paused && !game.isGameOver) {
       this.pausedDisplay.render();
@@ -72,71 +78,8 @@ class ScoreDisplay implements HUDComponent {
   }
 }
 
-// Speed display component
-class SpeedDisplay implements HUDComponent {
-  private readonly barWidth = 300;
-  private readonly barHeight = 10;
-  private readonly barPosition = {
-    x: p.width - 300 - 10,
-    y: p.height - 10 - 10,
-  };
-  private readonly textOffset = { x: 25, y: 10 };
-
-  public update(): void {
-    // Speed doesn't need animation updates
-  }
-
-  public render(): void {
-    this.renderSpeedBar();
-    this.renderSpeedText();
-  }
-
-  private renderSpeedBar(): void {
-    this.renderBarBackground();
-    this.renderBarFill();
-  }
-
-  private renderBarBackground(): void {
-    p.fill(50);
-    p.noStroke();
-    p.rect(
-      this.barPosition.x,
-      this.barPosition.y,
-      this.barWidth,
-      this.barHeight
-    );
-  }
-
-  private renderBarFill(): void {
-    const fillWidth = this.calculateFillWidth();
-    if (fillWidth > 0) {
-      p.fill(255);
-      p.rect(this.barPosition.x, this.barPosition.y, fillWidth, this.barHeight);
-    }
-  }
-
-  private calculateFillWidth(): number {
-    const speedRatio = game.ship
-      ? p.constrain(game.ship.vel.mag() / game.ship.maxSpeed, 0, 1)
-      : 0;
-    return this.barWidth * speedRatio;
-  }
-
-  private renderSpeedText(): void {
-    p.fill(255);
-    p.textSize(14);
-    p.textAlign(p.CENTER);
-    const speedValue = game.ship?.vel.mag().toFixed(2) || "0.00";
-    p.text(
-      speedValue,
-      p.width - this.textOffset.x,
-      this.barPosition.y - this.textOffset.y
-    );
-  }
-}
-
 class FPSDisplay implements HUDComponent {
-  private readonly position = { x: 20, y: p.height - 14 };
+  private readonly position = { x: 20, y: p.height - 20 };
   private readonly fontSize = 14;
   private fpsHistory: number[] = [];
   private readonly historyLength = 60; // 1 seconds at 60fps
@@ -159,9 +102,21 @@ class FPSDisplay implements HUDComponent {
           this.fpsHistory.length
         : 0;
 
+    const infos = [
+      `FPS: ${avgFps.toFixed(0)}`,
+      `Flames: ${game.ship?.flames.length || 0}`,
+      `Stars: ${stars.length}`,
+    ];
+
     p.fill(255);
     p.textSize(this.fontSize);
     p.textAlign(p.LEFT);
-    p.text(`FPS: ${avgFps.toFixed(0)}`, this.position.x, this.position.y);
+
+    let y = this.position.y;
+    let gap = 7;
+    for (let i = infos.length - 1; i >= 0; i--) {
+      p.text(infos[i], this.position.x, y);
+      y -= this.fontSize + gap;
+    }
   }
 }
