@@ -3,6 +3,7 @@ export const LIVES = 3;
 // export const DEBUG = true;
 export const DEBUG = false;
 export const BACKGROUND_COLOR = "#020307";
+export const SHIP_SPAWN_DELAY_MS = 500;
 
 // Ship
 export const SHIP_MAX_SPEED = 15;

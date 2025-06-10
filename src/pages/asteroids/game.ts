@@ -16,6 +16,7 @@ import {
   ASTEROID_INITIAL_COUNT,
   ASTEROID_SPLIT_COUNT,
   SHIP_ROTATION_SPEED,
+  SHIP_SPAWN_DELAY_MS,
 } from "./config";
 import { HUD } from "./hud/hud";
 
@@ -338,7 +339,7 @@ export class Game {
       this.ship = null;
       setTimeout(() => {
         this.ship = new Ship(this.p.width / 2, this.p.height / 2);
-      }, 300);
+      }, SHIP_SPAWN_DELAY_MS);
     }
   }
 
@@ -457,15 +458,16 @@ export class Game {
         this.resetGame();
         return;
       }
-    } else {
-      if (this.paused && e.key) {
-        this.paused = false;
-        return;
-      }
-      if (!this.paused && (e.key === "p" || e.key === "P")) {
-        this.paused = !this.paused;
-        return;
-      }
+    }
+
+    if (this.paused && e.key === " ") {
+      this.paused = false;
+      return;
+    }
+
+    if (!this.paused && (e.key === "p" || e.key === "P")) {
+      this.paused = !this.paused;
+      return;
     }
   }
 

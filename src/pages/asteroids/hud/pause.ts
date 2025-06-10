@@ -21,7 +21,7 @@ export class PausedDisplay implements HUDComponent {
     p.fill(255, flashRate);
     p.textSize(24);
     p.text(
-      "Click on the game or press any key to resume",
+      "Click on the game or press [SPACE] to resume",
       this.centerX,
       this.centerY + 50
     );
