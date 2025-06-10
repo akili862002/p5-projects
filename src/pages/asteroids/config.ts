@@ -4,6 +4,7 @@ export const LIVES = 3;
 export const DEBUG = false;
 export const BACKGROUND_COLOR = "#020307";
 export const SHIP_SPAWN_DELAY_MS = 500;
+export const POINTS_PER_LEVEL = 1000;
 
 // Ship
 export const SHIP_MAX_SPEED = 15;

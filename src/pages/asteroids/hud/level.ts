@@ -1,5 +1,6 @@
 import { HUDComponent } from "./hud";
 import { game, p } from "../sketch";
+import { POINTS_PER_LEVEL } from "../config";
 
 export class LevelDisplay implements HUDComponent {
   private targetProgress: number = 0;
@@ -9,12 +10,14 @@ export class LevelDisplay implements HUDComponent {
   constructor() {}
 
   public update(): void {
-    // Update the target progress based on the current score
-    this.targetProgress = game.score / 1000;
+    this.targetProgress = (game.score % POINTS_PER_LEVEL) / POINTS_PER_LEVEL;
 
-    // Smoothly interpolate current progress toward target
-    this.currentProgress +=
-      (this.targetProgress - this.currentProgress) * this.easeSpeed;
+    if (this.currentProgress < this.targetProgress) {
+      this.currentProgress +=
+        (this.targetProgress - this.currentProgress) * this.easeSpeed;
+    } else {
+      this.currentProgress = this.targetProgress;
+    }
   }
 
   public render(): void {

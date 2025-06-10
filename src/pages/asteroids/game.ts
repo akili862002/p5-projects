@@ -17,6 +17,7 @@ import {
   ASTEROID_SPLIT_COUNT,
   SHIP_ROTATION_SPEED,
   SHIP_SPAWN_DELAY_MS,
+  POINTS_PER_LEVEL,
 } from "./config";
 import { HUD } from "./hud/hud";
 
@@ -354,12 +355,12 @@ export class Game {
     // Check if enough time has passed since last rocket spawn
     const isSpawnTimeElapsed =
       this.p.frameCount - this.lastSpawnedRocketTime >
-      adjustedRocketSpawnInterval;
+      Math.max(60, adjustedRocketSpawnInterval);
 
     // Check all conditions for spawning a new rocket
     if (
       this.ship &&
-      this.getLevel() > 1 &&
+      this.getLevel() >= 2 &&
       isSpawnTimeElapsed &&
       this.rockets.length < ROCKET_MAX_GENERATE
     ) {
@@ -488,8 +489,7 @@ export class Game {
   }
 
   getLevel() {
-    // return 7;
-    return Math.floor(this.score / 1000) + 1;
+    return Math.floor(this.score / POINTS_PER_LEVEL) + 1;
   }
 
   // Getters for read-only access
