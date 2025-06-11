@@ -1,10 +1,11 @@
-import { p, game, stars } from "../sketch";
+import { p, game } from "../sketch";
 import { PausedDisplay } from "./pause";
 import { GameOverDisplay } from "./game-over";
 import { LivesDisplay } from "./lives";
 import { LevelDisplay } from "./level";
 import { SpeedDisplay } from "./speed";
 import { Toast } from "./toast";
+import { FPSDisplay } from "./infos";
 
 export class HUD {
   private scoreDisplay: ScoreDisplay;
@@ -80,48 +81,5 @@ class ScoreDisplay implements HUDComponent {
     p.textSize(this.fontSize);
     p.textAlign(p.LEFT);
     p.text(`${game.score}`, this.position.x, this.position.y + this.fontSize);
-  }
-}
-
-class FPSDisplay implements HUDComponent {
-  private readonly position = { x: 20, y: p.height - 20 };
-  private readonly fontSize = 14;
-  private fpsHistory: number[] = [];
-  private readonly historyLength = 60; // 1 seconds at 60fps
-
-  public update(): void {
-    // Store current frame rate
-    this.fpsHistory.push(p.frameRate());
-
-    // Keep only the last 3 seconds of data
-    if (this.fpsHistory.length > this.historyLength) {
-      this.fpsHistory.shift();
-    }
-  }
-
-  public render(): void {
-    // Calculate average FPS over 3 seconds
-    const avgFps =
-      this.fpsHistory.length > 0
-        ? this.fpsHistory.reduce((sum, fps) => sum + fps, 0) /
-          this.fpsHistory.length
-        : 0;
-
-    const infos = [
-      `FPS: ${avgFps.toFixed(0)}`,
-      `Flames: ${game.ship?.flames.length || 0}`,
-      `Stars: ${stars.length}`,
-    ];
-
-    p.fill(255);
-    p.textSize(this.fontSize);
-    p.textAlign(p.LEFT);
-
-    let y = this.position.y;
-    let gap = 7;
-    for (let i = infos.length - 1; i >= 0; i--) {
-      p.text(infos[i], this.position.x, y);
-      y -= this.fontSize + gap;
-    }
   }
 }

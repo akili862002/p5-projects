@@ -51,4 +51,8 @@ export class PointIndicator {
   reset() {
     this.items = [];
   }
+
+  count(): number {
+    return this.items.length;
+  }
 }

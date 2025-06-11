@@ -560,4 +560,8 @@ export class Game {
   get getExplosionEffects(): readonly ExplosionEffect[] {
     return this.explosionEffects;
   }
+
+  get getPointIndicators(): PointIndicator {
+    return this.pointIndicators;
+  }
 }
