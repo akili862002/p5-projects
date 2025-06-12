@@ -1,26 +1,32 @@
 import P5 from "p5";
+import { Howl, Howler } from "howler";
 
 export class SoundManager {
   private static instance: SoundManager;
+  private sounds: Record<string, Howl> = {};
   private soundPaths = {
     shoot: "/game/sounds/shoot.mp3",
     asteroidExplosion: "/game/sounds/asteroid-explosion.mp3",
   };
-  isMuted = true;
-  volume = 0.7;
+  // isMuted = true;
+  isMuted = false;
+  volume = 0.5;
   unmuteIcon: P5.Image;
   muteIcon: P5.Image;
 
   private constructor() {
     this.loadSounds();
+    Howler.volume(this.volume);
+    Howler.mute(this.isMuted);
   }
 
   private loadSounds() {
     for (const [key, path] of Object.entries(this.soundPaths)) {
-      const sound = new Audio(path);
-      sound.volume = this.volume;
-      sound.preload = "auto";
-      sound.load();
+      this.sounds[key] = new Howl({
+        src: [path],
+        preload: true,
+        volume: this.volume,
+      });
     }
   }
 
@@ -35,11 +41,7 @@ export class SoundManager {
     if (this.isMuted) return;
 
     try {
-      const sound = new Audio(this.soundPaths[key]);
-      sound.volume = this.volume;
-      sound.play().catch((error) => {
-        console.error(`Error playing sound ${key}:`, error);
-      });
+      this.sounds[key].play();
     } catch (error) {
       console.error(`Error playing sound ${key}:`, error);
     }
@@ -47,6 +49,12 @@ export class SoundManager {
 
   public toggleMute(): void {
     this.isMuted = !this.isMuted;
+    Howler.mute(this.isMuted);
+  }
+
+  public setVolume(value: number): void {
+    this.volume = Math.max(0, Math.min(1, value));
+    Howler.volume(this.volume);
   }
 
   public playFireSound(): void {
