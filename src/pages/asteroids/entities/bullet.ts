@@ -1,12 +1,7 @@
 import { Asteroid } from "./asteroid";
 import { p } from "../sketch";
 import P5, { Vector } from "p5";
-import {
-  BULLET_COLOR,
-  BULLET_LIFESPAN,
-  BULLET_RADIUS,
-  BULLET_SPEED,
-} from "../config";
+import { BULLET_COLOR, BULLET_LIFESPAN, BULLET_RADIUS } from "../config";
 import { hexToRgb } from "../utils";
 
 export class Bullet {
@@ -16,10 +11,9 @@ export class Bullet {
   lifespan = BULLET_LIFESPAN; // Frames until bullet disappears
   bulletColor = hexToRgb(BULLET_COLOR);
 
-  constructor(x: number, y: number, heading: number) {
-    this.pos = p.createVector(x, y);
-    const speed = BULLET_SPEED;
-    this.vel = Vector.fromAngle(heading).mult(speed);
+  constructor(args: { x: number; y: number; heading: number; speed: number }) {
+    this.pos = p.createVector(args.x, args.y);
+    this.vel = Vector.fromAngle(args.heading).mult(args.speed);
   }
 
   update() {

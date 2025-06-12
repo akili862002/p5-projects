@@ -8,12 +8,13 @@ import {
   SHIP_MAX_ROTATION,
   SHIP_BOOST_FORCE,
   SHIP_KNOCKBACK_FORCE,
+  SHIP_SHOOT_COOLDOWN,
+  BULLET_SPEED,
 } from "../config";
 import { Bullet } from "./bullet";
 import { Flame } from "./flame";
 
 type GunMode = "single" | "double";
-let gunMode: GunMode = "single";
 
 export class Ship {
   pos: P5.Vector;
@@ -30,17 +31,30 @@ export class Ship {
   positionHistory: P5.Vector[] = [];
   maxHistoryLength = 60; // Store positions for 60 frames
   isBoosting = false;
-  lastFireTime = 0;
-  minFireInterval = 150;
+  lastShootTime = 0;
+  shootCooldown = SHIP_SHOOT_COOLDOWN;
+  knockbackForce = SHIP_KNOCKBACK_FORCE;
   flames: Flame[] = [];
+  gunMode: GunMode = "single";
+  isDead = false;
+  bulletSpeed = BULLET_SPEED;
 
   constructor(x: number, y: number) {
+    this.reset(x, y);
+  }
+
+  reset(x: number, y: number) {
     this.pos = p.createVector(x, y);
     this.vel = p.createVector(0, 0);
     this.acc = p.createVector(0, 0);
     this.heading = -p.PI / 2;
     this.invincible = true;
     this.invincibleTimer = SHIP_INVINCIBLE_TIME;
+    this.flames = [];
+    this.lastShootTime = 0;
+    this.isBoosting = false;
+    this.rotation = 0;
+    this.isDead = false;
   }
 
   update() {
@@ -208,25 +222,30 @@ export class Ship {
 
   shoot() {
     const now = p.millis();
-    if (now - this.lastFireTime < this.minFireInterval) return;
-    this.lastFireTime = now;
+    if (now - this.lastShootTime < this.shootCooldown) return;
+    this.lastShootTime = now;
 
     // Knockback the ship
     const knockbackForce = Vector.fromAngle(this.heading)
       .mult(-1)
-      .setMag(SHIP_KNOCKBACK_FORCE);
+      .setMag(this.knockbackForce);
     this.applyForce(knockbackForce);
 
-    if (gunMode === "single") {
+    if (this.gunMode === "single") {
       const bulletPos = Vector.fromAngle(this.heading)
         .mult(this.r)
         .add(this.pos);
-      const newBullet = new Bullet(bulletPos.x, bulletPos.y, this.heading);
+      const newBullet = new Bullet({
+        x: bulletPos.x,
+        y: bulletPos.y,
+        heading: this.heading,
+        speed: this.bulletSpeed,
+      });
       newBullet.vel.add(this.vel);
 
       return [newBullet];
     }
-    if (gunMode === "double") {
+    if (this.gunMode === "double") {
       const bulletPos = Vector.fromAngle(this.heading)
         .mult(this.r)
         .add(this.pos);
@@ -235,19 +254,21 @@ export class Ship {
       const perpVector = Vector.fromAngle(this.heading + Math.PI / 2).mult(5);
 
       // First bullet - offset to the left
-      const newBullet = new Bullet(
-        bulletPos.x - perpVector.x,
-        bulletPos.y - perpVector.y,
-        this.heading
-      );
+      const newBullet = new Bullet({
+        x: bulletPos.x - perpVector.x,
+        y: bulletPos.y - perpVector.y,
+        heading: this.heading,
+        speed: this.bulletSpeed,
+      });
       newBullet.vel.add(this.vel);
 
       // Second bullet - offset to the right
-      const newBullet2 = new Bullet(
-        bulletPos.x + perpVector.x,
-        bulletPos.y + perpVector.y,
-        this.heading
-      );
+      const newBullet2 = new Bullet({
+        x: bulletPos.x + perpVector.x,
+        y: bulletPos.y + perpVector.y,
+        heading: this.heading,
+        speed: this.bulletSpeed,
+      });
       newBullet2.vel.add(this.vel);
 
       return [newBullet, newBullet2];
@@ -255,6 +276,18 @@ export class Ship {
   }
 
   switchGunMode(mode: GunMode) {
-    gunMode = mode;
+    this.gunMode = mode;
+  }
+
+  die() {
+    this.isDead = true;
+  }
+
+  setKnockbackForce(force: number) {
+    this.knockbackForce = force;
+  }
+
+  setBulletSpeed(speed: number) {
+    this.bulletSpeed = speed;
   }
 }

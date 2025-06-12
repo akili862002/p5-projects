@@ -18,8 +18,19 @@ import {
   SHIP_ROTATION_SPEED,
   SHIP_SPAWN_DELAY_MS,
   POINTS_PER_LEVEL,
+  MIN_SPAWN_DISTANCE,
+  PROVOCATIONS,
 } from "./config";
 import { HUD } from "./hud/hud";
+import { IBuff } from "./entities/buffs/buff";
+import {
+  DoubleGunBuff,
+  ReduceShootCooldownBuff,
+  ReduceKnockbackBuff,
+} from "./entities/buffs";
+import { HealBuff } from "./entities/buffs/heal.buff";
+import { BulletSpeedBuff } from "./entities/buffs/bullet-speed.buff";
+import { ExtraLiveBuff } from "./entities/buffs/extra-live.buff";
 
 export class Game {
   private p: P5;
@@ -29,9 +40,10 @@ export class Game {
 
   // Game state
   public score = 0;
+  public maxLives = LIVES;
   public lives = LIVES;
   public isGameOver = false;
-  public ship: Ship | null = null;
+  public ship: Ship;
   public paused = false;
 
   // Entity collections
@@ -41,12 +53,43 @@ export class Game {
   private explosionEffects: ExplosionEffect[] = [];
   private lastSpawnedRocketTime = 0;
   private level = 0;
+  private buffs: IBuff[] = [];
 
   constructor(p5: P5) {
     this.p = p5;
     this.soundManager = SoundManager.getInstance();
     this.pointIndicators = new PointIndicator();
     this.hud = new HUD();
+  }
+
+  resetGame() {
+    this.ship = new Ship(this.p.width / 2, this.p.height / 2);
+    this.asteroids = [];
+    this.bullets = [];
+    this.rockets = [];
+    this.explosionEffects = [];
+    this.pointIndicators.reset();
+    this.score = 0;
+    this.maxLives = LIVES;
+    this.lives = LIVES;
+    this.isGameOver = false;
+    this.level = 0;
+    this.hud.toast.clean();
+    this.buffs = [];
+
+    this.buffs.push(new DoubleGunBuff(this.ship));
+    this.buffs.push(new ReduceShootCooldownBuff(this.ship, 10));
+    this.buffs.push(new ReduceKnockbackBuff(this.ship, 80));
+    this.buffs.push(new BulletSpeedBuff(this.ship, 10));
+    this.buffs.push(new ExtraLiveBuff(this));
+    this.buffs.push(new ExtraLiveBuff(this));
+    this.buffs.push(new HealBuff(this));
+    this.applyBuffs();
+
+    // Create initial asteroids
+    for (let i = 0; i < ASTEROID_INITIAL_COUNT; i++) {
+      this.createAsteroid();
+    }
   }
 
   setup() {
@@ -87,7 +130,7 @@ export class Game {
 
   // Ship methods
   private updateShip() {
-    if (!this.ship) return;
+    if (this.ship.isDead) return;
 
     this.ship.update();
     this.ship.edges();
@@ -95,7 +138,7 @@ export class Game {
   }
 
   private drawShip() {
-    if (!this.ship) return;
+    if (this.ship.isDead) return;
     this.ship.draw();
   }
 
@@ -170,7 +213,7 @@ export class Game {
     asteroid: Asteroid,
     asteroidIndex: number
   ) {
-    if (!this.ship) return;
+    if (this.ship.isDead) return;
 
     if (this.ship.intersects(asteroid)) {
       this.destroyShip(asteroid.vel);
@@ -237,7 +280,7 @@ export class Game {
     for (let i = this.rockets.length - 1; i >= 0; i--) {
       const rocket = this.rockets[i];
       rocket.update();
-      if (this.ship) rocket.tracking(this.ship.pos);
+      if (!this.ship.isDead) rocket.tracking(this.ship.pos);
       rocket.edges();
 
       if (rocket.shouldRemove()) {
@@ -246,7 +289,11 @@ export class Game {
       }
 
       // Check if rocket collides with ship
-      if (this.ship && rocket.intersects(this.ship) && !this.ship.invincible) {
+      if (
+        !this.ship.isDead &&
+        rocket.intersects(this.ship) &&
+        !this.ship.invincible
+      ) {
         this.destroyShip(rocket.vel);
         this.rockets.splice(i, 1);
         continue;
@@ -331,8 +378,10 @@ export class Game {
       this.hud.toast.add(`Level Up!`, 100);
     }
 
-    if (lv === 2) {
-      this.ship?.switchGunMode("double");
+    if (lv === 2 && this.ship) {
+      this.buffs.push(new DoubleGunBuff(this.ship));
+      this.applyBuffs();
+
       setTimeout(() => {
         this.hud.toast.add(`Level Up!. You got Double Gun!`, 3 * 60);
 
@@ -343,9 +392,15 @@ export class Game {
     }
   }
 
+  private applyBuffs() {
+    for (const buff of this.buffs) {
+      buff.apply();
+    }
+  }
+
   // Ship destruction
   private destroyShip(force?: Vector) {
-    if (!this.ship) throw new Error("Ship is not defined");
+    if (this.ship.isDead) throw new Error("Ship is not defined");
 
     this.lives--;
 
@@ -369,33 +424,18 @@ export class Game {
       this.gameOver();
     } else {
       // Reset ship
-      this.ship = null;
+      this.ship.die();
       setTimeout(() => {
-        this.ship = new Ship(this.p.width / 2, this.p.height / 2);
+        this.ship.reset(this.p.width / 2, this.p.height / 2);
       }, SHIP_SPAWN_DELAY_MS);
 
       // Show toast
-      const provocations = [
-        "That's all you got?",
-        "Oops! Try again!",
-        "Watch out for those asteroids!",
-        "Not your best moment...",
-        "Don't give up now!",
-        "Need better reflexes?",
-        "Close, but not close enough!",
-        "Pilot error detected!",
-        "Asteroids: 1, You: 0",
-        "Space is dangerous!",
-        "Shields? What shields?",
-        "Navigate better next time!",
-      ];
       const message =
-        provocations[Math.floor(Math.random() * provocations.length)];
+        PROVOCATIONS[Math.floor(Math.random() * PROVOCATIONS.length)];
       this.hud.toast.add(message, 3 * 60);
     }
   }
 
-  // Spawning logic
   private spawnRocket() {
     // Calculate adjusted spawn interval based on level
     const adjustedRocketSpawnInterval =
@@ -408,7 +448,7 @@ export class Game {
 
     // Check all conditions for spawning a new rocket
     if (
-      this.ship &&
+      !this.ship.isDead &&
       this.getLevel() >= 2 &&
       isSpawnTimeElapsed &&
       this.rockets.length < ROCKET_MAX_GENERATE
@@ -433,14 +473,14 @@ export class Game {
     const newSize = size ?? this.p.random(30, 50);
 
     // Ensure asteroids don't spawn too close to the ship
-    if (this.ship) {
+    if (!this.ship.isDead) {
       const shipDist = this.p.dist(
         newX,
         newY,
         this.ship.pos.x,
         this.ship.pos.y
       );
-      if (shipDist < 200 && x === undefined) {
+      if (shipDist < MIN_SPAWN_DISTANCE && x === undefined) {
         return this.createAsteroid();
       }
     }
@@ -451,29 +491,22 @@ export class Game {
   }
 
   private createRocket() {
+    if (this.ship.isDead) return;
+
     const newX = this.p.random(0, this.p.width);
     const newY = this.p.random(0, this.p.height);
 
-    // Ensure rockets don't spawn too close to the ship
-    if (this.ship) {
-      const shipDist = this.p.dist(
-        newX,
-        newY,
-        this.ship.pos.x,
-        this.ship.pos.y
-      );
-      if (shipDist < 250) {
-        return this.createRocket();
-      }
+    const shipDist = this.p.dist(newX, newY, this.ship.pos.x, this.ship.pos.y);
+    if (shipDist < MIN_SPAWN_DISTANCE) {
+      return this.createRocket();
     }
 
     const rocket = new Rocket(newX, newY);
     this.rockets.push(rocket);
   }
 
-  // Input handling
   keyboards() {
-    if (!this.ship) return;
+    if (this.ship.isDead) return;
 
     if (this.p.keyIsDown(this.p.LEFT_ARROW) || this.p.keyIsDown(65)) {
       this.ship.addRotation(-SHIP_ROTATION_SPEED);
@@ -494,30 +527,9 @@ export class Game {
     this.ship.isBoosting = isHoldingUp;
   }
 
-  // Game state management
-  resetGame() {
-    this.ship = new Ship(this.p.width / 2, this.p.height / 2);
-    this.asteroids = [];
-    this.bullets = [];
-    this.rockets = [];
-    this.explosionEffects = [];
-    this.pointIndicators.reset();
-    this.score = 0;
-    this.lives = LIVES;
-    this.isGameOver = false;
-    this.level = 0;
-    this.ship.switchGunMode("single");
-    this.hud.toast.clean();
-
-    // Create initial asteroids
-    for (let i = 0; i < ASTEROID_INITIAL_COUNT; i++) {
-      this.createAsteroid();
-    }
-  }
-
   private gameOver() {
     this.isGameOver = true;
-    this.ship = null;
+    this.ship.die();
     ScoreManager.saveScore(this.score);
   }
 
@@ -563,5 +575,9 @@ export class Game {
 
   get getPointIndicators(): PointIndicator {
     return this.pointIndicators;
+  }
+
+  get getBuffs(): readonly IBuff[] {
+    return this.buffs;
   }
 }

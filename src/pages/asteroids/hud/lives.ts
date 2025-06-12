@@ -5,7 +5,6 @@ import { LIVES } from "../config";
 export class LivesDisplay implements HUDComponent {
   private readonly heartSize = 40;
   private readonly heartGap = 3;
-  private readonly maxLives = 3;
   private readonly position = { y: 10 };
   private readonly activeOpacity = 255;
   private readonly inactiveOpacity = 40;
@@ -37,7 +36,7 @@ export class LivesDisplay implements HUDComponent {
   }
 
   public render(): void {
-    for (let i = 0; i < this.maxLives; i++) {
+    for (let i = 0; i < game.maxLives; i++) {
       const heartX = this.calculateHeartX(i);
       this.setHeartOpacity(i);
       p.image(

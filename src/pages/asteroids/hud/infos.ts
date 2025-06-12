@@ -28,6 +28,7 @@ export class FPSDisplay implements HUDComponent {
     const infos = [
       `FPS  : ${avgFps.toFixed(0)}`,
       `Objs : ${this.countEntities()}`,
+      `Buffs: ${game.getBuffs.map((buff) => buff.name).join(", ") || "None"}`,
     ];
 
     p.push();
