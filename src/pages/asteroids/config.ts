@@ -16,7 +16,7 @@ export const LIVES = 3;
 export const DEBUG = false;
 export const BACKGROUND_COLOR = "#020307";
 export const SHIP_SPAWN_DELAY_MS = 300;
-export const POINTS_PER_LEVEL = 600;
+export const POINTS_PER_LEVEL = 400;
 // export const POINTS_PER_LEVEL = 100;
 
 // Ship
