@@ -1,85 +1,89 @@
-import { p, game } from "../sketch";
-import { PausedDisplay } from "./pause";
-import { GameOverDisplay } from "./game-over";
-import { LivesDisplay } from "./lives";
-import { LevelDisplay } from "./level";
-import { SpeedDisplay } from "./speed";
-import { Toast } from "./toast";
-import { FPSDisplay } from "./infos";
+import { p } from "../sketch";
+import { GameEngine } from "../core/GameEngine";
+import { ScoreManager } from "../score";
 
 export class HUD {
-  private scoreDisplay: ScoreDisplay;
-  private livesDisplay: LivesDisplay;
-  private speedDisplay: SpeedDisplay;
-  private fpsDisplay: FPSDisplay;
-  private gameOverDisplay: GameOverDisplay;
-  private pausedDisplay: PausedDisplay;
-  private levelDisplay: LevelDisplay;
-  public toast: Toast;
+  private gameEngine: GameEngine;
 
   constructor() {
-    this.initializeComponents();
-  }
-
-  private initializeComponents(): void {
-    this.scoreDisplay = new ScoreDisplay();
-    this.livesDisplay = new LivesDisplay();
-    this.speedDisplay = new SpeedDisplay();
-    this.fpsDisplay = new FPSDisplay();
-    this.gameOverDisplay = new GameOverDisplay();
-    this.pausedDisplay = new PausedDisplay();
-    this.levelDisplay = new LevelDisplay();
-    this.toast = new Toast(p);
+    this.gameEngine = GameEngine.getInstance();
   }
 
   public update(): void {
-    this.scoreDisplay.update();
-    this.livesDisplay.update();
-    this.speedDisplay.update();
-    this.fpsDisplay.update();
-    this.levelDisplay.update();
-    this.toast.update();
+    // Nothing to update yet
   }
 
   public render(): void {
-    this.scoreDisplay.render();
-    this.livesDisplay.render();
-    this.speedDisplay.render();
-    this.fpsDisplay.render();
-    this.levelDisplay.render();
-    this.toast.draw();
+    this.renderScore();
+    this.renderLives();
 
-    if (game.paused && !game.isGameOver) {
-      this.pausedDisplay.render();
+    if (this.gameEngine.isPaused() && !this.gameEngine.isGameOver()) {
+      this.renderPausedScreen();
     }
   }
 
   public renderGameOver(): void {
-    this.gameOverDisplay.render();
+    // Draw game over screen
+    const width = p.width;
+    const height = p.height;
+
+    p.push();
+    p.fill(0, 0, 0, 180);
+    p.rect(0, 0, width, height);
+
+    p.fill(255);
+    p.textSize(64);
+    p.textAlign(p.CENTER, p.CENTER);
+    p.text("GAME OVER", width / 2, height / 2 - 100);
+
+    const score = this.gameEngine.getGameState().getScore();
+    p.textSize(36);
+    p.text(`SCORE: ${score}`, width / 2, height / 2);
+
+    const highScore = ScoreManager.getHighScore();
+    p.textSize(24);
+    p.text(`HIGH SCORE: ${highScore}`, width / 2, height / 2 + 50);
+
+    p.textSize(18);
+    p.text("PRESS 'R' TO RESTART", width / 2, height / 2 + 120);
+    p.pop();
   }
-}
 
-export interface HUDComponent {
-  update(): void;
-  render(): void;
-}
+  private renderScore(): void {
+    const score = this.gameEngine.getGameState().getScore();
+    const fontSize = 44;
 
-class ScoreDisplay implements HUDComponent {
-  private readonly fontSize = 44;
-  private readonly position = { x: 20, y: 10 };
-
-  constructor() {
-    // No animation initialization needed
-  }
-
-  public update(): void {
-    // No animation to update
-  }
-
-  public render(): void {
+    p.push();
     p.fill(111, 215, 237);
-    p.textSize(this.fontSize);
+    p.textSize(fontSize);
     p.textAlign(p.LEFT);
-    p.text(`${game.score}`, this.position.x, this.position.y + this.fontSize);
+    p.text(`${score}`, 20, 10 + fontSize);
+    p.pop();
+  }
+
+  private renderLives(): void {
+    const lives = this.gameEngine.getGameState().getLives();
+
+    p.push();
+    p.fill(255);
+    p.textSize(18);
+    p.textAlign(p.LEFT);
+    p.text(`LIVES: ${lives}`, 20, 70);
+    p.pop();
+  }
+
+  private renderPausedScreen(): void {
+    p.push();
+    p.fill(0, 0, 0, 180);
+    p.rect(0, 0, p.width, p.height);
+
+    p.fill(255);
+    p.textSize(48);
+    p.textAlign(p.CENTER, p.CENTER);
+    p.text("PAUSED", p.width / 2, p.height / 2);
+
+    p.textSize(18);
+    p.text("CLICK TO RESUME", p.width / 2, p.height / 2 + 50);
+    p.pop();
   }
 }

@@ -1,293 +1,262 @@
-import P5, { Vector } from "p5";
-import { isDebug, p, shipImg } from "../sketch";
-import { Asteroid } from "./asteroid";
+import { Vector } from "p5";
+import { Entity } from "../core/Entity";
+import { CircleCollider } from "../core/components/Collider";
+import { ImageRenderer } from "../core/components/Renderer";
+import { p, shipImg } from "../sketch";
 import {
   SHIP_MAX_SPEED,
   SHIP_FRICTION,
-  SHIP_INVINCIBLE_TIME,
-  SHIP_MAX_ROTATION,
   SHIP_BOOST_FORCE,
   SHIP_KNOCKBACK_FORCE,
   SHIP_SHOOT_COOLDOWN,
   BULLET_SPEED,
+  SHIP_MAX_ROTATION,
 } from "../config";
-import { Bullet } from "./bullet";
-import { Flame } from "./flame";
+import { EventSystem } from "../core/EventSystem";
+import { FlameParticleSystem } from "./FlameParticleSystem";
 
-type GunMode = "single" | "double";
+// Define the return type for bullets
+interface BulletData {
+  x: number;
+  y: number;
+  vel: Vector;
+}
 
-export class Ship {
-  pos: P5.Vector;
-  vel: P5.Vector;
-  acc: P5.Vector;
-  r = 24;
-  heading: number;
-  rotation = 0;
-  maxSpeed = SHIP_MAX_SPEED;
-  friction = SHIP_FRICTION;
-  invincible = false;
-  invincibleTimer = 0;
-  maxRotation = SHIP_MAX_ROTATION;
-  positionHistory: P5.Vector[] = [];
-  maxHistoryLength = 60; // Store positions for 60 frames
-  isBoosting = false;
-  lastShootTime = 0;
-  shootCooldown = SHIP_SHOOT_COOLDOWN;
-  knockbackForce = SHIP_KNOCKBACK_FORCE;
-  flames: Flame[] = [];
-  gunMode: GunMode = "single";
-  isDead = false;
-  bulletSpeed = BULLET_SPEED;
+export class Ship extends Entity {
+  private flameParticleSystem: FlameParticleSystem;
+  private invincible: boolean = false;
+  private invincibleTimer: number = 0;
+  private isBoosting: boolean = false;
+  private lastShootTime: number = 0;
+  private shootCooldown: number = SHIP_SHOOT_COOLDOWN;
+  private knockbackForce: number = SHIP_KNOCKBACK_FORCE;
+  private bulletSpeed: number = BULLET_SPEED;
+  private gunMode: "single" | "double" = "single";
+  private isDead: boolean = false;
+  private collider: CircleCollider;
+  private renderer: ImageRenderer;
 
   constructor(x: number, y: number) {
+    super(x, y);
+
+    // Initialize components
+    this.collider = new CircleCollider(24); // Ship radius
+    this.renderer = new ImageRenderer(shipImg, 48, 48); // Ship size
+    this.flameParticleSystem = new FlameParticleSystem(this);
+
+    // Add components
+    this.addComponent(this.collider);
+    this.addComponent(this.renderer);
+
+    // Initialize ship properties
     this.reset(x, y);
   }
 
-  reset(x: number, y: number) {
-    this.pos = p.createVector(x, y);
-    this.vel = p.createVector(0, 0);
-    this.acc = p.createVector(0, 0);
-    this.heading = -p.PI / 2;
+  public reset(x: number, y: number): void {
+    this.setPosition(x, y);
+    this.setVelocity(0, 0);
+    this.transform.heading = -p.PI / 2;
+    this.transform.friction = SHIP_FRICTION;
+    this.transform.maxSpeed = SHIP_MAX_SPEED;
     this.invincible = true;
-    this.invincibleTimer = SHIP_INVINCIBLE_TIME;
-    this.flames = [];
-    this.lastShootTime = 0;
+    this.invincibleTimer = 180; // 3 seconds at 60fps
     this.isBoosting = false;
-    this.rotation = 0;
+    this.lastShootTime = 0;
     this.isDead = false;
   }
 
-  update() {
-    // Update heading based on rotation
-    this.heading += this.rotation;
-    this.rotation *= 0.9; // Dampen rotation
-    if (Math.abs(this.rotation) > this.maxRotation) {
-      this.rotation = this.maxRotation * Math.sign(this.rotation);
+  public update(): void {
+    if (this.isDead) return;
+
+    // Update transform (position, velocity, etc.)
+    this.transform.update();
+
+    // Dampen rotation
+    this.transform.rotation *= 0.9;
+    if (Math.abs(this.transform.rotation) > SHIP_MAX_ROTATION) {
+      this.transform.rotation =
+        SHIP_MAX_ROTATION * Math.sign(this.transform.rotation);
     }
 
-    // Update position with physics
-    this.vel.add(this.acc);
-    this.vel.mult(this.friction);
-    this.vel.limit(this.maxSpeed);
-    this.pos.add(this.vel);
-    this.acc.mult(0);
-
-    // Handl e invincibility timer
+    // Update invincibility
     if (this.invincible) {
       this.invincibleTimer--;
       if (this.invincibleTimer <= 0) {
         this.invincible = false;
       }
-    }
 
-    // Update flames
-    for (let flame of this.flames) {
-      flame.update();
-      if (flame.shouldRemove()) {
-        this.flames = this.flames.filter((f) => f !== flame);
+      // Flash the ship when invincible
+      if (p.frameCount % 10 < 5) {
+        this.renderer.setAlpha(150);
+      } else {
+        this.renderer.setAlpha(255);
       }
-    }
-  }
-
-  applyForce(force: P5.Vector) {
-    this.acc.add(force);
-  }
-
-  draw() {
-    p.push();
-    p.translate(this.pos.x, this.pos.y);
-    p.rotate(this.heading + p.PI / 2); // Add PI/2 to make the ship point up
-
-    // Flash if invincible
-    if (this.invincible && p.frameCount % 10 < 5) {
-      p.tint(255, 150); // Semi-transparent
+    } else {
+      this.renderer.setAlpha(255);
     }
 
-    // if (this.vel.mag() > 0.1) {
-    //   p.fill(116, 239, 248, 50);
-    //   p.circle(0, 0, this.r * 3);
-    //   p.fill(255, 255, 255, 255);
-    // }
-
-    p.imageMode(p.CENTER);
-    const width = this.r * 2;
-    const aspect = 1;
-    const height = width / aspect;
-    p.image(shipImg, 0, 0, width, height);
-
-    // Draw thruster when boosting
+    // Handle boosting
     if (this.isBoosting) {
-      // p.push();
-      // p.translate(0, this.r * 1.8);
-      // const scale = 1.3;
-      // p.image(firerImg, 0, 0, this.r * scale, this.r * scale);
-      // p.pop();
-      // Create flames
+      this.boost();
     }
 
-    // Draw flames
-
-    p.pop();
-
-    for (let flame of this.flames) {
-      flame.draw();
-    }
-
-    if (isDebug) {
-      p.push();
-      p.noFill();
-      p.stroke(0, 255, 0);
-      p.circle(this.pos.x, this.pos.y, this.r * 2);
-      p.pop();
-
-      // draw velocity vector
-      p.push();
-      p.noFill();
-      p.stroke(255);
-      const scale = 10;
-      p.line(
-        this.pos.x,
-        this.pos.y,
-        this.pos.x + this.vel.x * scale,
-        this.pos.y + this.vel.y * scale
-      );
-      p.pop();
-    }
+    // Update flame particles
+    this.flameParticleSystem.update();
   }
 
-  boost() {
-    const force = Vector.fromAngle(this.heading).setMag(SHIP_BOOST_FORCE);
-    this.applyForce(force);
-    this.createFlames();
+  public draw(): void {
+    if (this.isDead) return;
+
+    // Draw the ship (handled by renderer component)
+    this.renderer.render();
+
+    // Draw flame particles
+    this.flameParticleSystem.draw();
+
+    // Draw debug collider if needed
+    this.collider.drawDebug();
   }
 
-  createFlames() {
-    // Create realistic flame particles with randomized properties
-    const flameCount = 8;
+  public handleEdges(): void {
+    const pos = this.getPosition();
+    const r = this.collider.getRadius();
 
-    // Get position behind the ship
-    const shipBackPos = this.pos
-      .copy()
-      .add(Vector.fromAngle(this.heading + p.PI).mult(this.r * 0.9));
+    // Wrap around edges of canvas
+    if (pos.x < -r) {
+      this.setPosition(p.width + r, pos.y);
+    } else if (pos.x > p.width + r) {
+      this.setPosition(-r, pos.y);
+    }
 
-    for (let i = 0; i < flameCount; i++) {
-      // Add randomness to position
-      const offsetAngle = p.random(-1, 1) + this.heading + p.PI;
-      const offsetMagnitude = p.random(0, this.r * 0.4);
-      const flamePos = shipBackPos
-        .copy()
-        .add(Vector.fromAngle(offsetAngle).mult(offsetMagnitude));
-
-      let color = p.color(116, 239, 248);
-
-      const flame = new Flame({
-        pos: flamePos,
-        heading: this.heading + p.random(-0.3, 0.3),
-        color: color,
-        sizeDecrease: p.random(0.05, 0.2),
-      });
-
-      // Randomize flame size
-      flame.size = p.random(1, 5);
-
-      this.flames.push(flame);
+    if (pos.y < -r) {
+      this.setPosition(pos.x, p.height + r);
+    } else if (pos.y > p.height + r) {
+      this.setPosition(pos.x, -r);
     }
   }
 
-  edges() {
-    // Wrap around edges of canvas with momentum preservation
-    if (this.pos.x < -this.r) {
-      this.pos.x = p.width + this.r;
-    } else if (this.pos.x > p.width + this.r) {
-      this.pos.x = -this.r;
+  public boost(): void {
+    const force = Vector.fromAngle(this.transform.heading).mult(
+      SHIP_BOOST_FORCE
+    );
+    this.addForce(force);
+    this.flameParticleSystem.createFlames();
+  }
+
+  public setIsBoosting(boosting: boolean): void {
+    this.isBoosting = boosting;
+  }
+
+  public addRotation(amount: number): void {
+    this.transform.rotation += amount;
+  }
+
+  public shoot(): BulletData[] | null {
+    const currentTime = p.millis();
+    if (currentTime - this.lastShootTime < this.shootCooldown) {
+      return null;
     }
 
-    if (this.pos.y < -this.r) {
-      this.pos.y = p.height + this.r;
-    } else if (this.pos.y > p.height + this.r) {
-      this.pos.y = -this.r;
-    }
-  }
+    this.lastShootTime = currentTime;
 
-  intersects(asteroid: Asteroid) {
-    if (this.invincible) return false;
-
-    const d = this.pos.dist(asteroid.pos);
-    return d < this.r + asteroid.r;
-  }
-
-  addRotation(rotation: number) {
-    this.rotation += rotation;
-  }
-
-  shoot() {
-    const now = p.millis();
-    if (now - this.lastShootTime < this.shootCooldown) return;
-    this.lastShootTime = now;
-
-    // Knockback the ship
-    const knockbackForce = Vector.fromAngle(this.heading)
-      .mult(-1)
-      .setMag(this.knockbackForce);
-    this.applyForce(knockbackForce);
-
+    // Create bullet(s) based on gun mode
     if (this.gunMode === "single") {
-      const bulletPos = Vector.fromAngle(this.heading)
-        .mult(this.r)
-        .add(this.pos);
-      const newBullet = new Bullet({
-        x: bulletPos.x,
-        y: bulletPos.y,
-        heading: this.heading,
-        speed: this.bulletSpeed,
+      const bulletPos = this.getPosition()
+        .copy()
+        .add(
+          Vector.fromAngle(this.transform.heading).mult(
+            this.collider.getRadius() * 1.2
+          )
+        );
+      const bulletVel = Vector.fromAngle(this.transform.heading).mult(
+        this.bulletSpeed
+      );
+
+      // Apply knockback to ship
+      this.applyKnockback(bulletVel);
+
+      // Return the bullet data
+      return [
+        {
+          x: bulletPos.x,
+          y: bulletPos.y,
+          vel: bulletVel,
+        },
+      ];
+    } else {
+      // Double gun mode - create two bullets at an angle
+      const bulletOffset = 0.2; // Slight angle offset
+      const bullets: BulletData[] = [];
+
+      // First bullet (left)
+      const bulletPos1 = this.getPosition()
+        .copy()
+        .add(
+          Vector.fromAngle(this.transform.heading - bulletOffset).mult(
+            this.collider.getRadius() * 1.2
+          )
+        );
+      const bulletVel1 = Vector.fromAngle(
+        this.transform.heading - bulletOffset
+      ).mult(this.bulletSpeed);
+      bullets.push({
+        x: bulletPos1.x,
+        y: bulletPos1.y,
+        vel: bulletVel1,
       });
-      newBullet.vel.add(this.vel);
 
-      return [newBullet];
-    }
-    if (this.gunMode === "double") {
-      const bulletPos = Vector.fromAngle(this.heading)
-        .mult(this.r)
-        .add(this.pos);
-
-      // Create perpendicular vector for correct offset
-      const perpVector = Vector.fromAngle(this.heading + Math.PI / 2).mult(5);
-
-      // First bullet - offset to the left
-      const newBullet = new Bullet({
-        x: bulletPos.x - perpVector.x,
-        y: bulletPos.y - perpVector.y,
-        heading: this.heading,
-        speed: this.bulletSpeed,
+      // Second bullet (right)
+      const bulletPos2 = this.getPosition()
+        .copy()
+        .add(
+          Vector.fromAngle(this.transform.heading + bulletOffset).mult(
+            this.collider.getRadius() * 1.2
+          )
+        );
+      const bulletVel2 = Vector.fromAngle(
+        this.transform.heading + bulletOffset
+      ).mult(this.bulletSpeed);
+      bullets.push({
+        x: bulletPos2.x,
+        y: bulletPos2.y,
+        vel: bulletVel2,
       });
-      newBullet.vel.add(this.vel);
 
-      // Second bullet - offset to the right
-      const newBullet2 = new Bullet({
-        x: bulletPos.x + perpVector.x,
-        y: bulletPos.y + perpVector.y,
-        heading: this.heading,
-        speed: this.bulletSpeed,
-      });
-      newBullet2.vel.add(this.vel);
+      // Apply knockback to ship (average of both bullet velocities)
+      const avgVel = bulletVel1.copy().add(bulletVel2).div(2);
+      this.applyKnockback(avgVel);
 
-      return [newBullet, newBullet2];
+      return bullets;
     }
   }
 
-  switchGunMode(mode: GunMode) {
+  private applyKnockback(bulletVel: Vector): void {
+    const knockback = bulletVel.copy().mult(-this.knockbackForce / 100);
+    this.transform.applyImpulse(knockback);
+  }
+
+  public switchGunMode(mode: "single" | "double"): void {
     this.gunMode = mode;
   }
 
-  die() {
+  public die(): void {
     this.isDead = true;
+    this.setActive(false);
   }
 
-  setKnockbackForce(force: number) {
+  public setKnockbackForce(force: number): void {
     this.knockbackForce = force;
   }
 
-  setBulletSpeed(speed: number) {
+  public setBulletSpeed(speed: number): void {
     this.bulletSpeed = speed;
+  }
+
+  public setShootCooldown(cooldown: number): void {
+    this.shootCooldown = cooldown;
+  }
+
+  public isInvincible(): boolean {
+    return this.invincible;
   }
 }

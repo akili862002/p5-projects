@@ -1,9 +1,9 @@
 import P5 from "p5";
-import { Game } from "./game";
 import { BACKGROUND_COLOR, DEBUG } from "./config";
+import { GameManager } from "./GameManager";
 
 export let p: P5;
-export let game: Game;
+export let gameManager: GameManager;
 
 // Images
 export let shipImg: P5.Image;
@@ -33,9 +33,9 @@ export function sketch(p5: P5) {
     const canvas = p.createCanvas(innerWidth, innerHeight);
     backgroundColor = p.color(BACKGROUND_COLOR);
 
-    // Initialize game
-    game = new Game(p);
-    game.setup();
+    // Initialize game manager
+    gameManager = new GameManager(p);
+    gameManager.setup();
 
     // Create stars for background
     createBackgroundStars();
@@ -54,10 +54,8 @@ export function sketch(p5: P5) {
   p.draw = () => {
     drawBackground(stars);
 
-    game.update();
-    game.draw();
-
-    game.keyboards();
+    gameManager.update();
+    gameManager.draw();
   };
 
   const createBackgroundStars = () => {
@@ -86,9 +84,7 @@ export function sketch(p5: P5) {
 
   // Tab visibility handlers
   const handleTabInactive = () => {
-    if (!game.isGameOver) {
-      game.paused = true;
-    }
+    gameManager.getGameEngine().setPaused(true);
   };
 
   const handleTabActive = () => {
@@ -96,18 +92,21 @@ export function sketch(p5: P5) {
   };
 
   const handleVisibilityChange = () => {
-    if (document.hidden && !game.isGameOver) {
-      game.paused = true;
+    if (document.hidden) {
+      gameManager.getGameEngine().setPaused(true);
     }
   };
 
   const handleCanvasClick = () => {
-    if (game.paused && !game.isGameOver) {
-      game.paused = false;
+    if (
+      gameManager.getGameEngine().isPaused() &&
+      !gameManager.getGameEngine().isGameOver()
+    ) {
+      gameManager.getGameEngine().setPaused(false);
     }
   };
 
   p.keyPressed = (e: any) => {
-    game.onKeyPressed(e);
+    gameManager.handleKeyPressed(e);
   };
 }
