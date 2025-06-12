@@ -13,24 +13,17 @@ import {
   ASTEROID_MAX_GENERATE,
   ROCKET_SPAWN_INTERVAL,
   ROCKET_MAX_GENERATE,
-  ASTEROID_INITIAL_COUNT,
   ASTEROID_SPLIT_COUNT,
   SHIP_ROTATION_SPEED,
   SHIP_SPAWN_DELAY_MS,
   POINTS_PER_LEVEL,
   MIN_SPAWN_DISTANCE,
   PROVOCATIONS,
+  buffs,
 } from "./config";
 import { HUD } from "./hud/hud";
 import { IBuff } from "./entities/buffs/buff";
-import {
-  DoubleGunBuff,
-  ReduceShootCooldownBuff,
-  ReduceKnockbackBuff,
-} from "./entities/buffs";
-import { HealBuff } from "./entities/buffs/heal.buff";
-import { BulletSpeedBuff } from "./entities/buffs/bullet-speed.buff";
-import { ExtraLiveBuff } from "./entities/buffs/extra-live.buff";
+import { DoubleGunBuff } from "./entities/buffs";
 
 export class Game {
   private p: P5;
@@ -77,17 +70,9 @@ export class Game {
     this.hud.toast.clean();
     this.buffs = [];
 
-    // this.buffs.push(new DoubleGunBuff(this.ship));
-    // this.buffs.push(new ReduceShootCooldownBuff(this.ship, 10));
-    // this.buffs.push(new ReduceKnockbackBuff(this.ship, 80));
-    // this.buffs.push(new BulletSpeedBuff(this.ship, 10));
-    // this.buffs.push(new ExtraLiveBuff(this));
-    // this.buffs.push(new ExtraLiveBuff(this));
-    // this.buffs.push(new HealBuff(this));
-    // this.applyBuffs();
-
     // Create initial asteroids
-    for (let i = 0; i < ASTEROID_INITIAL_COUNT; i++) {
+    const initialAsteroidCount = this.p.map(window.innerWidth, 0, 1400, 0, 8);
+    for (let i = 0; i < initialAsteroidCount; i++) {
       this.createAsteroid();
     }
   }
@@ -374,22 +359,36 @@ export class Game {
   private handleLevelUp(lv: number) {
     if (lv === 1) {
       this.hud.toast.add("Welcome to Asteroids, Captain!", 3 * 60);
-    } else {
-      this.hud.toast.add(`Level Up!`, 100);
+      return;
     }
 
-    if (lv === 2 && this.ship) {
-      this.buffs.push(new DoubleGunBuff(this.ship));
-      this.applyBuffs();
-
+    if (lv === 2) {
       setTimeout(() => {
-        this.hud.toast.add(`Level Up!. You got Double Gun!`, 3 * 60);
-
-        setTimeout(() => {
-          this.hud.toast.add(`Watchout! Rockets are coming!`, 5 * 60);
-        }, 500);
+        this.hud.toast.add(`[!] Watchout! Rockets are coming!`, 5 * 60);
       }, 2000);
     }
+
+    const randomBuff = this.getRandomBuff();
+    if (randomBuff) {
+      this.buffs.push(randomBuff);
+    }
+    this.applyBuffs();
+    this.hud.toast.add(`Level Up!. You got ${randomBuff.name}`, 3 * 60);
+  }
+  private getRandomBuff(): IBuff {
+    const totalWeight = buffs.reduce((sum, buff) => sum + buff.weight, 0);
+    const randomValue = this.p.random(0, totalWeight);
+    let cumulativeWeight = 0;
+
+    for (const buff of buffs) {
+      cumulativeWeight += buff.weight;
+      if (randomValue <= cumulativeWeight) {
+        return buff.getBuff(this.ship, this);
+      }
+    }
+
+    // Fallback in case something goes wrong with the weighted selection
+    return buffs[0].getBuff(this.ship, this);
   }
 
   private applyBuffs() {
@@ -439,12 +438,12 @@ export class Game {
   private spawnRocket() {
     // Calculate adjusted spawn interval based on level
     const adjustedRocketSpawnInterval =
-      ROCKET_SPAWN_INTERVAL - this.getLevel() * 60;
+      ROCKET_SPAWN_INTERVAL - this.getLevel() * 30;
 
     // Check if enough time has passed since last rocket spawn
     const isSpawnTimeElapsed =
       this.p.frameCount - this.lastSpawnedRocketTime >
-      Math.max(60, adjustedRocketSpawnInterval);
+      Math.max(30, adjustedRocketSpawnInterval);
 
     // Check all conditions for spawning a new rocket
     if (

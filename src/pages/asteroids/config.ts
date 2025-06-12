@@ -1,10 +1,22 @@
+import { Ship } from "./entities/ship";
+import { Game } from "./game";
+import {
+  DoubleGunBuff,
+  ReduceShootCooldownBuff,
+  ReduceKnockbackBuff,
+} from "./entities/buffs";
+import { HealBuff } from "./entities/buffs/heal.buff";
+import { BulletSpeedBuff } from "./entities/buffs/bullet-speed.buff";
+import { ExtraLiveBuff } from "./entities/buffs/extra-live.buff";
+import { IBuff } from "./entities/buffs/buff";
+
 // Game
 export const LIVES = 3;
 // export const DEBUG = true;
 export const DEBUG = false;
 export const BACKGROUND_COLOR = "#020307";
 export const SHIP_SPAWN_DELAY_MS = 300;
-export const POINTS_PER_LEVEL = 1000;
+export const POINTS_PER_LEVEL = 600;
 // export const POINTS_PER_LEVEL = 100;
 
 // Ship
@@ -31,7 +43,6 @@ export const ASTEROID_MAX_SPEED = 8;
 export const ASTEROID_SPAWN_INTERVAL = 300; // 5 seconds
 export const ASTEROID_MAX_GENERATE = 12;
 export const ASTEROID_SPLIT_COUNT = 2;
-export const ASTEROID_INITIAL_COUNT = 8;
 
 // Point indicator
 export const POINT_INDICATOR_COLOR = "#74EFF8";
@@ -39,7 +50,7 @@ export const POINT_INDICATOR_COLOR = "#74EFF8";
 // Rocket
 export const ROCKET_COLOR = "#74EFF8";
 export const ROCKET_MAX_SPEED = 7;
-export const ROCKET_SPAWN_INTERVAL = 12 * 60; // seconds
+export const ROCKET_SPAWN_INTERVAL = 15 * 60; // seconds
 export const ROCKET_MAX_GENERATE = 5;
 export const ROCKET_LIFESPAN = 850;
 export const ROCKET_STEER_FORCE = 0.08;
@@ -57,4 +68,40 @@ export const PROVOCATIONS = [
   "Pilot error detected!",
   "Space is dangerous!",
   "Navigate! Better next time",
+];
+export const buffs: {
+  name: string;
+  weight: number; // Higher number means higher chance to appear
+  getBuff: (ship: Ship, game: Game) => IBuff;
+}[] = [
+  {
+    name: "Double Gun",
+    weight: 1,
+    getBuff: (ship: Ship, game: Game) => new DoubleGunBuff(ship),
+  },
+  {
+    name: "Reduce Knockback",
+    weight: 1.5,
+    getBuff: (ship: Ship, game: Game) => new ReduceKnockbackBuff(ship, 20),
+  },
+  {
+    name: "Reduce Cooldown",
+    weight: 2,
+    getBuff: (ship: Ship, game: Game) => new ReduceShootCooldownBuff(ship, 15),
+  },
+  {
+    name: "Heal",
+    weight: 1,
+    getBuff: (ship: Ship, game: Game) => new HealBuff(game),
+  },
+  {
+    name: "Bullet Speed",
+    weight: 2,
+    getBuff: (ship: Ship, game: Game) => new BulletSpeedBuff(ship, 10),
+  },
+  {
+    name: "Extra Life",
+    weight: 0.5,
+    getBuff: (ship: Ship, game: Game) => new ExtraLiveBuff(game),
+  },
 ];

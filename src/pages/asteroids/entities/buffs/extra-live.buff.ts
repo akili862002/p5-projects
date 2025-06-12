@@ -4,13 +4,18 @@ import { IBuff } from "./buff";
 
 export class ExtraLiveBuff implements IBuff {
   constructor(private game: Game) {}
+  applied = false;
 
   apply() {
+    if (this.applied) return;
+
+    this.applied = true;
     this.game.maxLives++;
+    this.game.lives++;
   }
 
   remove() {
-    if (this.game.maxLives > LIVES) {
+    if (this.applied && this.game.maxLives > LIVES) {
       this.game.maxLives--;
     }
   }
