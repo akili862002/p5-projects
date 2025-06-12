@@ -77,14 +77,14 @@ export class Game {
     this.hud.toast.clean();
     this.buffs = [];
 
-    this.buffs.push(new DoubleGunBuff(this.ship));
-    this.buffs.push(new ReduceShootCooldownBuff(this.ship, 10));
-    this.buffs.push(new ReduceKnockbackBuff(this.ship, 80));
-    this.buffs.push(new BulletSpeedBuff(this.ship, 10));
-    this.buffs.push(new ExtraLiveBuff(this));
-    this.buffs.push(new ExtraLiveBuff(this));
-    this.buffs.push(new HealBuff(this));
-    this.applyBuffs();
+    // this.buffs.push(new DoubleGunBuff(this.ship));
+    // this.buffs.push(new ReduceShootCooldownBuff(this.ship, 10));
+    // this.buffs.push(new ReduceKnockbackBuff(this.ship, 80));
+    // this.buffs.push(new BulletSpeedBuff(this.ship, 10));
+    // this.buffs.push(new ExtraLiveBuff(this));
+    // this.buffs.push(new ExtraLiveBuff(this));
+    // this.buffs.push(new HealBuff(this));
+    // this.applyBuffs();
 
     // Create initial asteroids
     for (let i = 0; i < ASTEROID_INITIAL_COUNT; i++) {
