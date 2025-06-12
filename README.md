@@ -1,50 +1,66 @@
-# React + TypeScript + Vite
+# Surtin Labs - Creative Coding Showcase
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A collection of interactive p5.js creative coding experiments, built with React and TypeScript.
 
-Currently, two official plugins are available:
+![Surtin Labs Preview](/public/preview/flocking.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Projects
 
-## Expanding the ESLint configuration
+- **Collision** - Physics-based collision detection and response simulation
+- **Flocking** - Bird flocking behavior simulation based on Craig Reynolds' Boids algorithm
+- **Cube Wave** - Animated 3D cube wave visualization
+- **Raycasting** - 2.5D raycasting renderer inspired by early FPS games
+- **Terrain 3D** - Procedurally generated 3D terrain with Perlin noise
+- **Asteroids** - Recreation of the classic Asteroids arcade game
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Live Demo
 
-- Configure the top-level `parserOptions` property like this:
+Visit [https://surtinlabs.vercel.app](https://surtinlabs.vercel.app) to see the projects in action.
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Technologies
+
+- [React](https://reactjs.org/) - UI framework
+- [TypeScript](https://www.typescriptlang.org/) - Type-safe JavaScript
+- [p5.js](https://p5js.org/) - Creative coding library
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
+- [Vite](https://vitejs.dev/) - Next-generation frontend tooling
+- [Vercel](https://vercel.com/) - Deployment platform
+
+## Development
+
+### Prerequisites
+
+- [Bun](https://bun.sh/) - JavaScript runtime and package manager
+
+### Getting Started
+
+1. Clone the repository
+
+   ```bash
+   git clone https://github.com/yourusername/surtinlabs.git
+   cd surtinlabs
+   ```
+
+2. Install dependencies
+
+   ```bash
+   bun install
+   ```
+
+3. Start the development server
+
+   ```bash
+   bun dev
+   ```
+
+4. Open [http://localhost:5173](http://localhost:5173) in your browser
+
+### Building for Production
+
+```bash
+bun run build
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## License
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+MIT
