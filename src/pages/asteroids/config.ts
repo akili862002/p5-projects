@@ -76,28 +76,28 @@ export const buffs: {
 }[] = [
   {
     name: "Double Gun",
-    weight: 1,
+    weight: 2,
     getBuff: (ship: Ship, game: Game) => new DoubleGunBuff(ship),
   },
   {
     name: "Reduce Knockback",
-    weight: 1.5,
-    getBuff: (ship: Ship, game: Game) => new ReduceKnockbackBuff(ship, 20),
+    weight: 2,
+    getBuff: (ship: Ship, game: Game) => new ReduceKnockbackBuff(ship, 25),
   },
   {
     name: "Reduce Cooldown",
-    weight: 2,
+    weight: 3,
     getBuff: (ship: Ship, game: Game) => new ReduceShootCooldownBuff(ship, 15),
+  },
+  {
+    name: "Bullet Speed",
+    weight: 3,
+    getBuff: (ship: Ship, game: Game) => new BulletSpeedBuff(ship, 15),
   },
   {
     name: "Heal",
     weight: 1,
     getBuff: (ship: Ship, game: Game) => new HealBuff(game),
-  },
-  {
-    name: "Bullet Speed",
-    weight: 2,
-    getBuff: (ship: Ship, game: Game) => new BulletSpeedBuff(ship, 10),
   },
   {
     name: "Extra Life",
